@@ -1,49 +1,46 @@
-import sublime, sublime_plugin
-from lib import diff_match_patch as dmp 
+import sublime_plugin
+import sublime
+from lib import diff_match_patch as dmp
+
+bufs = {}
+
+import json
+
 
 class Listener(sublime_plugin.EventListener):
-	def __init__(self, *args, **kwargs):
-		sublime_plugin.EventListener.__init__(self, *args, **kwargs)
-		self.dirty = False
-		self.t = ""
-		self.sel = None
-		self.patch = dmp.diff_match_patch().patch_make
-		
-	def on_new(self, view):
-		print view
+    def id(self, view):
+        return view.buffer_id()
 
-	def on_load(self, view):
-		self.t = self.text(view)
-		print view
+    def name(self, view):
+        return view.file_name()
 
-	def on_modified(self, view):
-		self.dirty = True
-		# print 'dirty'
-		# self.t = self.text(view)
-		print self.patch(self.text(view), self.text(self.view))
-		self.view = view
+    def on_new(self, view):
+        print 'new', self.name(view)
 
-	def text(self, view):
-		return view.substr(sublime.Region(0, view.size())).encode('utf-8')
+    def on_load(self, view):
+        self.add_to_buf(view)
+        print 'load', self.name(view)
 
-	def on_selection_modified(self, view):
-		sel = view.sel()[0]
+    def on_clone(self, view):
+        self.add_to_buf(view)
+        print 'clone', self.name(view)
 
-		# if not self.dirty:
-		# 	self.sel = sel 
-		# 	return
-		
-		# self.dirty = False
-		
-		# if self.sel is None:
-		# 	self.sel = sel
+    def on_activated(self, view):
+        print 'activated', self.name(view)
 
-		# region = (self.sel.begin(), sel.end())
-		# self.sel = sel
-		# print region
-		# print region, view.substr(sublime.Region(*region))
-		#print view.substr(sublime.Region(sel.begin()-1, sel.end()))
-		
-		# region = view.visible_region()abcde
-		# text = view.substr(region)
-		#lastLine = view.rowcol(sel[0].end())[0]
+    def add_to_buf(self, view):
+        bufs[self.id(view)] = self.text(view)
+
+    def text(self, view):
+        return view.substr(sublime.Region(0, view.size()))
+
+    def on_modified(self, view):
+        _id = self.id(view)
+        if not _id in bufs:
+            self.add_to_buf(view)
+            return
+        t = self.text(view)
+        patches = dmp.diff_match_patch().patch_make(bufs[_id], t)
+        js = json.dumps([str(x) for x in patches])
+        print js
+        bufs[_id] = t
