@@ -2,12 +2,11 @@ import json
 import Queue
 import threading
 import cStringIO
+import socket
 
 import sublime
 import sublime_plugin
 from lib import diff_match_patch as dmp
-
-import socket
 
 
 class Listener(sublime_plugin.EventListener, threading.Thread):
@@ -23,6 +22,13 @@ class Listener(sublime_plugin.EventListener, threading.Thread):
         self.queue = Queue.Queue()
         self.start()
         self.buf = cStringIO.String()
+
+    def get_view(self, buf_uid):
+        for window in sublime.windows():
+            for view in window.views():
+                if self.id(view) == buf_uid:
+                    return view
+        return None
 
     def run(self):
         sublime.set_timeout(self.sync, 200)
@@ -51,7 +57,21 @@ class Listener(sublime_plugin.EventListener, threading.Thread):
 
     def handle_req(self, line):
         req = json.loads(line)
-        print req
+        view = self.get_view(req.uid)
+        if not view:
+            print 'no view found for req: %s' % (req)
+            return
+        #get patch obj
+        patches = []
+        for patch in req.patches:
+            patches.append(dmp.patch_fromText(patch))
+        #get text
+        text = self.text(view)
+        #apply patch to text
+        text = dmp.patch_apply(patches, text)
+        #update buffer
+        region = sublime.Region(0, view.size())
+        view.replace(region, text)
 
     def send_patches(self):
         reported = set()
