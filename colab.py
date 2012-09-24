@@ -9,97 +9,110 @@ import sublime_plugin
 from lib import diff_match_patch as dmp
 
 
-class Listener(sublime_plugin.EventListener, threading.Thread):
-    bufs = {}
+SOCK = socket.socket()
+SOCK.connect(('127.0.0.1', 12345))
+SOCK.setblocking(0)
+Q = Queue.Queue()
+BUF = ""
+BUFS = {}
+
+
+def text(view):
+    return view.substr(sublime.Region(0, view.size()))
+
+
+def get_view(buf_uid):
+    for window in sublime.windows():
+        for view in window.views():
+            if view.buffer_id() == buf_uid:
+                return view
+    return None
+
+
+def handle_req(line):
+    req = json.loads(line)
+    view = get_view(req.uid)
+    if not view:
+        print 'no view found for req: %s' % (req)
+        return
+    #get patch obj
+    patches = []
+    for patch in req.patches:
+        patches.append(dmp.patch_fromText(patch))
+    #get text
+    t = text(view)
+    #apply patch to text
+    t = dmp.patch_apply(patches, t)
+    #update buffer
+    region = sublime.Region(0, view.size())
+    view.replace(region, t)
+
+
+def send_patches():
+    reported = set()
+    while (True):
+        try:
+            view = Q.get_nowait()
+        except Queue.Empty:
+            break
+        buf_id = view.buffer_id()
+        if buf_id in reported:
+            continue
+        t = text(view)
+        patches = dmp.diff_match_patch().patch_make(BUFS[buf_id], t)
+        print('sending report for %s' % (view.file_name()))
+
+        BUFS[buf_id] = t
+
+        patches = json.dumps([str(x).encode('base64') for x in patches])
+        request = {
+            "patches": patches,
+            "uid": buf_id,
+            "file_name": view.file_name()
+        }
+        req = json.dumps(request) + '\n'
+        BUFS[buf_id] = t
+        print req
+        SOCK.send(req)
+
+
+def recv_patches():
+    global BUF
+    while True:
+        try:
+            BUF += SOCK.recv(1024)
+        except socket.error:
+            break
+
+    for line in BUF.split('\n'):
+        if not line:
+            return
+        try:
+            handle_req(line)
+        except:
+            raise
+    new_buf = cStringIO.String()
+    new_buf.write(BUF.read())
+    BUF.close()
+    BUF = new_buf
+
+
+def sync():
+    send_patches()
+    recv_patches()
+    sublime.set_timeout(sync, 200)
+
+
+__active_linter_thread = threading.Thread(target=sync)
+__active_linter_thread.start()
+
+
+class Listener(sublime_plugin.EventListener):
     url = 'http://fixtheco.de:3149/patch/'
-    patcher = dmp.diff_match_patch().patch_make
-
-    def __init__(self):
-        super(Listener, self).__init__()
-        self.sock = socket.socket()
-        self.sock.setblocking(0)
-        self.sock.connect(('localhost', 12345))
-        self.queue = Queue.Queue()
-        self.start()
-        self.buf = cStringIO.String()
-
-    def get_view(self, buf_uid):
-        for window in sublime.windows():
-            for view in window.views():
-                if self.id(view) == buf_uid:
-                    return view
-        return None
 
     def run(self):
+        print('running')
         sublime.set_timeout(self.sync, 200)
-
-    def sync(self):
-        self.send_patches()
-        self.recv_patches()
-        sublime.set_timeout(self.sync, 200)
-
-    def recv_patches(self):
-        while True:
-            try:
-                socket.recvfrom_into(1024, self.buf)
-            except socket.error:
-                break
-        self.buf.seek(0)
-        for line in self.buf.readlines():
-            try:
-                self.handle_req(line)
-            except:
-                raise
-        new_buf = cStringIO.String()
-        new_buf.write(self.buf.read())
-        self.buf.close()
-        self.buf = new_buf
-
-    def handle_req(self, line):
-        req = json.loads(line)
-        view = self.get_view(req.uid)
-        if not view:
-            print 'no view found for req: %s' % (req)
-            return
-        #get patch obj
-        patches = []
-        for patch in req.patches:
-            patches.append(dmp.patch_fromText(patch))
-        #get text
-        text = self.text(view)
-        #apply patch to text
-        text = dmp.patch_apply(patches, text)
-        #update buffer
-        region = sublime.Region(0, view.size())
-        view.replace(region, text)
-
-    def send_patches(self):
-        reported = set()
-        while (True):
-            try:
-                view = self.queue.get_nowait()
-            except Queue.Empty:
-                break
-            buf_id = self.id(view)
-            if buf_id in reported:
-                continue
-            t = self.text(view)
-            patches = self.patcher(self.bufs[buf_id], t)
-            print('sending report for %s' % (view.file_name()))
-
-            self.bufs[buf_id] = t
-
-            patches = json.dumps([str(x).encode('base64') for x in patches])
-            request = {
-                "patches": patches,
-                "uid": buf_id,
-                "file_name": view.file_name()
-            }
-            self.bufs[self.id(view)] = self.text(view)
-            reported.add(buf_id)
-            req = json.dumps(request) + '\n'
-            print req
-            self.sock.send(req)
 
     def id(self, view):
         return view.buffer_id()
@@ -124,15 +137,12 @@ class Listener(sublime_plugin.EventListener, threading.Thread):
 
     def add(self, view, no_stomp=False):
         print("adding %s" % (view.file_name()))
-        buf_id = self.id(view)
-        if no_stomp and buf_id in self.bufs:
+        buf_id = view.buffer_id()
+        if no_stomp and buf_id in BUFS:
             return False
-        self.bufs[self.id(view)] = self.text(view)
+        BUFS[buf_id] = text(view)
         return True
-
-    def text(self, view):
-        return view.substr(sublime.Region(0, view.size()))
 
     def on_modified(self, view):
         self.add(view, True)
-        self.queue.put(view)
+        Q.put(view)

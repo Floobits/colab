@@ -1797,7 +1797,7 @@ class diff_match_patch:
   def patch_fromText(self, textline):
     """Parse a textual representation of patches and return a list of patch
     objects.
-    
+
     Args:
       textline: Text representation of patches.
 
