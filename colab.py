@@ -5,6 +5,7 @@ import threading
 import time
 import socket
 import asyncore
+import os
 
 import sublime
 import sublime_plugin
@@ -29,15 +30,6 @@ def get_view(buf_uid):
     return None
 
 
-def run():
-    conn = Conn()
-    sublime.set_timeout(conn.send_patches, 3000)
-    asyncore.loop()
-
-__active_linter_thread = threading.Thread(target=run)
-__active_linter_thread.start()
-
-
 class Conn(asyncore.dispatcher):
 
     def __init__(self):
@@ -48,10 +40,15 @@ class Conn(asyncore.dispatcher):
         self.buffer_in = ""
 
     def handle_connect(self):
-        pass
+        handshake = json.dumps({"uid": os.getpid()}) + '\n'
+        self.send(handshake)
 
     def handle_close(self):
         self.close()
+        unrun()
+
+    def handle_error(self, err):
+        print(err)
 
     def handle_read(self):
         self.buffer_in += self.recv(1024)
@@ -84,14 +81,15 @@ class Conn(asyncore.dispatcher):
         view.replace(region, t)
 
     def send_patches(self):
+        print 'calling send patches'
         reported = set()
         while (True):
             print 'in send patches'
             try:
-                print 'getting from queue'
                 view = Q.get_nowait()
             except Queue.Empty:
                 break
+            print('got %s from q' % view)
             buf_id = view.buffer_id()
             if buf_id in reported:
                 continue
@@ -111,7 +109,9 @@ class Conn(asyncore.dispatcher):
             req = json.dumps(request) + '\n'
             BUFS[buf_id] = t
             print req
-            self.buffer_out += request
+            self.buffer_out += req
+        if send_events:
+            sublime.set_timeout(self.send_patches, 3000)
 
     def recv_patches(self):
         for line in self.buffer_in.split('\n'):
@@ -159,3 +159,22 @@ class Listener(sublime_plugin.EventListener):
             return
         self.add(view, True)
         Q.put(view)
+
+
+send_events = True
+def unrun():
+    global send_events
+    send_events = False
+    raise KeyboardInterrupt('time to die')
+
+
+def run():
+    try:
+        conn = Conn()
+        sublime.set_timeout(conn.send_patches, 3000)
+        asyncore.loop()
+    except Exception as e:
+        print e
+
+thread = threading.Thread(target=run)
+thread.start()
