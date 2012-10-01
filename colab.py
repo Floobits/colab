@@ -172,8 +172,12 @@ class Listener(sublime_plugin.EventListener):
 
 class JoinChannelCommand(sublime_plugin.TextCommand):
     def run(self, *args, **kwargs):
-        sublime.status_message('hawro')
+        self.get_window().show_input_panel("Channel", "", self.on_input, None, None)
         #self.panel('hawro')
+
+    def on_input(self, channel):
+        print('chanel: %s' % channel)
+        sublime.status_message('colab chanel: %s' % (channel))
 
     def active_view(self):
         return self.view
