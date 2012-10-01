@@ -5,7 +5,6 @@ import threading
 import time
 import socket
 import asyncore
-import os
 
 import sublime
 import sublime_plugin
@@ -16,6 +15,7 @@ BUF = ""
 BUFS = {}
 SOCK = None
 previous = time.time()
+active = True
 
 
 def text(view):
@@ -40,11 +40,14 @@ class Conn(asyncore.dispatcher):
         self.buffer_in = ""
 
     def handle_connect(self):
-        handshake = json.dumps({"uid": os.getpid()}) + '\n'
-        self.send(handshake)
+
+        # handshake = json.dumps({"uid": os.getpid()}) + '\n'
+        # self.send(handshake)
+        pass
 
     def handle_close(self):
-        self.close()
+        print('closing')
+       # self.close()
         unrun()
 
     def handle_error(self, err):
@@ -110,7 +113,7 @@ class Conn(asyncore.dispatcher):
             BUFS[buf_id] = t
             print req
             self.buffer_out += req
-        if send_events:
+        if active:
             sublime.set_timeout(self.send_patches, 3000)
 
     def recv_patches(self):
@@ -140,6 +143,9 @@ class Listener(sublime_plugin.EventListener):
         self.add(view)
         print 'clone', self.name(view)
 
+    def on_modified(self, view):
+        self.add(view, True)
+
     def on_activated(self, view):
         if view.is_scratch():
             return
@@ -147,24 +153,22 @@ class Listener(sublime_plugin.EventListener):
         print 'activated', self.name(view)
 
     def add(self, view, no_stomp=False):
+        if view.is_scratch():
+            return
+        if not active:
+            return
         print("adding %s" % (view.file_name()))
         buf_id = view.buffer_id()
         if no_stomp and buf_id in BUFS:
             return False
         BUFS[buf_id] = text(view)
+        Q.put(view)
         return True
 
-    def on_modified(self, view):
-        if view.is_scratch():
-            return
-        self.add(view, True)
-        Q.put(view)
 
-
-send_events = True
 def unrun():
-    global send_events
-    send_events = False
+    global active
+    active = False
     raise KeyboardInterrupt('time to die')
 
 
