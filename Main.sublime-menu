@@ -4,7 +4,12 @@
   "id": "tools",
   "children": [{
     "id": "colabmenu",
-    "caption": "coLab"
+    "caption": "coLab",
+    "children": [{
+      "id": "colab_channel_menu",
+      "caption": "Select Channel",
+      "command": "join_channel"
+    }]
   }]
 },
 {
