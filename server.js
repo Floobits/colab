@@ -22,27 +22,22 @@ var server = net.createServer(function(c) {
   });
 
   c.on('data', function(d){
-    var length_chars, length, msg;
+    var msg;
     console.log("d: " + d);
     buf += d;
     console.log("buf: " + buf);
-    if (buf.length < LENGTH_PREFIX){
-      console.log("getting prefix: buf is only " + buf.length + " bytes");
+    if (buf.indexOf("\n") === -1) {
       return;
     }
-    length_chars = parseInt(buf.slice(0, LENGTH_PREFIX), 10);
-    if (buf.length < length_chars + LENGTH_PREFIX) {
-      console.log("getting msg: buf is only " + buf.length + " bytes. want " + length_chars + LENGTH_PREFIX + " bytes");
-      return;
-    }
-    msg = buf.slice(0, length_chars+LENGTH_PREFIX);
-    buf = buf.slice(length_chars+LENGTH_PREFIX);
-    console.log(msg);
+    msg = buf.split("\n", 2);
+    buf = msg[1];
+    msg = msg[0];
+    console.log("msg: ", msg);
     _.each(active_conns, function(conn, id){
       if (id === number){
         return;
       }
-      conn.write(msg);
+      conn.write(msg + "\n");
     });
   });
 });
