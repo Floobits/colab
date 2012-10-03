@@ -2,6 +2,8 @@
 var net = require('net');
 var util = require('util');
 var events = require('events');
+var crypto = require('crypto');
+var DMP = new require('diff_match_patch').diff_match_patch();
 
 var _ = require('underscore');
 
@@ -31,7 +33,6 @@ ColabServer.prototype.on_conn = function(conn){
   agent.once('on_conn_end', self.on_conn_end.bind(self));
 };
 
-<<<<<<< HEAD
 ColabServer.prototype.on_conn_end = function(agent){
   var self = this;
   delete self.agents[agent.id];
@@ -47,6 +48,28 @@ ColabServer.prototype.broadcast = function(room, dpm){
   });
 };
 
+var ColabBuffer = function(agent, uid, name){
+  var self = this;
+  self.guid = util.format("%s-%s", agent.id, uid);
+  self.state = "";
+  self.checksum = null;
+  self.is_valide = true;
+};
+util.inherits(ColabBuffer, events.EventEmitter);
+
+ColabBuffer.prototype.on_dmp = function(patches, checksum){
+  DMP.patch_apply(patches, self.state);
+  var hash = crypto.createHash('md5').update(self.state);
+
+  if (hash.digest("hex") !== checksum){
+    // TODO- tell client to resend whole damn file
+    self.is_valide = false;
+    return;
+  }
+  self.checksum = checksum;
+  self.emit('dmp', patches, checksum);
+};
+
 var AgentConnection = function(id, conn, server){
   var self = this;
   self.id = id;
@@ -54,6 +77,7 @@ var AgentConnection = function(id, conn, server){
   self.server = self;
   self.buf = "";
   self.rooms = [];
+  self.
   conn.on('end', function(){
     self.emit('on_conn_end', self);
   });
@@ -61,6 +85,8 @@ var AgentConnection = function(id, conn, server){
   self.on('requst', self.on_request.bind(self));
   events.EventEmitter.call(self);
 };
+
+AgentConnection.supported_versions = ['0.01'];
 
 util.inherits(AgentConnection, events.EventEmitter);
 
@@ -108,7 +134,15 @@ AgentConnection.prototype.on_request = function(raw){
     return;
   }
   json = JSON.parse(raw);
+  if (!json.v || !_.has(self.supported_versions, json.v)){
+    self.conn.destroy();
+    return;
+  }
+
   console.log(json);
 };
 
+AgentConnection.prototype.on_dmp = function(event){
+
+};
 server.listen(3148);
