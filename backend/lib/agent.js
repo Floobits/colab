@@ -108,8 +108,14 @@ AgentConnection.prototype.on_request = function(raw){
 
 };
 
-AgentConnection.prototype.on_dmp = function(colab_buf){
-
+AgentConnection.prototype.on_dmp = function(json){
+  var str = JSON.dumps(json) + '\n';
+  var str_len = str.length;
+  var str_str_len = toString(str_len);
+  while (str_str_len.length < LENGTH_PREFIX){
+    str_str_len = '0' + str_str_len;
+  }
+  self.conn.write(str_str_len + str);
 };
 
 modules.exports = AgentConnection;
