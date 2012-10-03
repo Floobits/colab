@@ -24,10 +24,13 @@ var AgentConnection = function(id, conn, room){
     // do we need to remove the room listener?
     self.emit('on_conn_end', self);
   });
+  conn.on('connect', function () {
+    self.buf = "";
+  });
   conn.on('data', self.on_data.bind(self));
 
   // internal events
-  self.on('requst', self.on_request.bind(self));
+  self.on('request', self.on_request.bind(self));
   self.on('dmp', function(){
     if (!self._room){
       return;
@@ -59,35 +62,28 @@ AgentConnection.prototype.attending = function(room){
 
 AgentConnection.prototype.on_data = function(d){
   var self = this;
-  var length_chars, length, msg;
+  var msg;
 
   console.log("d: " + d);
 
   self.buf += d;
 
-  if (self.buf.length < LENGTH_PREFIX){
-    console.log("getting prefix: buf is only " + self.buf.length + " bytes");
+  if (self.buf.indexOf("\n") === -1){
+    console.log("buf has no newline");
     return;
   }
 
-  length_chars = parseInt(self.buf.slice(0, LENGTH_PREFIX), 10);
-  if (self.buf.length < length_chars + LENGTH_PREFIX) {
-    console.log("getting msg: buf is only " + self.buf.length + " bytes. want " + length_chars + LENGTH_PREFIX + " bytes");
-    return;
-  }
+  msg = self.buf.split("\n", 2);
+  self.buf = msg[1];
+  msg = msg[0];
 
-  msg = self.buf.slice(LENGTH_PREFIX, length_chars+LENGTH_PREFIX);
   self.emit('request', msg);
-  self.buf = self.buf.slice(length_chars+LENGTH_PREFIX);
 };
 
 AgentConnection.prototype.on_request = function(raw){
   var self = this;
   var req, buf;
-  raw = raw.slice(LENGTH_PREFIX);
-  if (raw.indexOf("\n") === -1) {
-    return;
-  }
+  console.log(raw);
   req = JSON.parse(raw);
   if (!req.v || !_.has(SUPPORTED_VERSIONS, req.v)){
     return self.conn.destroy();
