@@ -77,7 +77,6 @@ AgentConnection.prototype.on_data = function(d){
   msg = msg[0];
 
   _.each(self.room.agents, function (v) {
-    console.log("k: " + v.id + " id: " + self.id);
     if (v.id === self.id) {
       return;
     }
