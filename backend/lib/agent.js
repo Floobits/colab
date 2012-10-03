@@ -7,7 +7,6 @@ var _ = require('underscore');
 var ColabBuffer = require('./buffer');
 var createRoom = require('./room').create;
 
-var LENGTH_PREFIX = 20;
 var SUPPORTED_VERSIONS = ['0.01'];
 
 
@@ -19,6 +18,7 @@ var AgentConnection = function(id, conn, room){
   self.id = id;
   self.conn = conn;
   self._bufs = [];
+  self.room = room;
   // wire events
   conn.on('end', function(){
     // do we need to remove the room listener?
@@ -67,7 +67,6 @@ AgentConnection.prototype.on_data = function(d){
   console.log("d: " + d);
 
   self.buf += d;
-
   if (self.buf.indexOf("\n") === -1){
     console.log("buf has no newline");
     return;
@@ -77,7 +76,14 @@ AgentConnection.prototype.on_data = function(d){
   self.buf = msg[1];
   msg = msg[0];
 
-  self.emit('request', msg);
+  _.each(self.room.agents, function (v) {
+    console.log("k: " + v.id + " id: " + self.id);
+    if (v.id === self.id) {
+      return;
+    }
+    v.conn.write(msg + "\n");
+  });
+  //self.emit('request', msg);
 };
 
 AgentConnection.prototype.on_request = function(raw){
@@ -86,11 +92,13 @@ AgentConnection.prototype.on_request = function(raw){
   console.log(raw);
   req = JSON.parse(raw);
   if (!req.v || !_.has(SUPPORTED_VERSIONS, req.v)){
-    return self.conn.destroy();
+    console.log("bad client. goodbye");
+//    return self.conn.destroy();
   }
 
   if (!req.event.uid){
-    return self.conn.destroy();
+    console.log("bad client: no event uid. goodbye");
+//    return self.conn.destroy();
   }
 
   buf = self.colab_bufs[req.event.uid];
@@ -101,7 +109,6 @@ AgentConnection.prototype.on_request = function(raw){
   buf = new ColabBuffer(self, req.uid, req.name, req.patches);
 
   self.colab_bufs[buf.uid] = buf;
-
 };
 
 AgentConnection.prototype.on_dmp = function(json){

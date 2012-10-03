@@ -9,7 +9,7 @@ var AgentConnection = require('./agent');
 
 var ColabServer = function(){
   var self = this;
-  self.number = 0;
+  self.conn_number = 0;
   self.agents = {};
 };
 
@@ -26,14 +26,14 @@ ColabServer.prototype.on_conn = function(conn){
   var self = this;
   var number = ++self.conn_number;
   var agent = new AgentConnection(number, conn, self);
-  self.agents[number] = number;
+  self.agents[number] = agent;
   agent.once('on_conn_end', self.on_conn_end.bind(self));
 };
 
 ColabServer.prototype.on_conn_end = function(agent){
   var self = this;
   delete self.agents[agent.id];
-  console.log('server disconnected');
+  console.log('client disconnected');
 };
 
 exports.run = function(){
