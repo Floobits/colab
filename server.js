@@ -31,6 +31,7 @@ ColabServer.prototype.on_conn = function(conn){
   agent.once('on_conn_end', self.on_conn_end.bind(self));
 };
 
+<<<<<<< HEAD
 ColabServer.prototype.on_conn_end = function(agent){
   var self = this;
   delete self.agents[agent.id];
@@ -103,9 +104,11 @@ AgentConnection.prototype.on_data = function(d){
 AgentConnection.prototype.on_request = function(raw){
   var self = this;
   raw = raw.slice(LENGTH_PREFIX);
+  if (raw.indexOf("\n") === -1) {
+    return;
+  }
   json = JSON.parse(raw);
   console.log(json);
 };
 
-var server = new ColabServer();
 server.listen(3148);
