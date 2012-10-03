@@ -5,5 +5,5 @@ var path = require('path');
 var fs = require('fs');
 
 exports.run = function run() {
-  require('./lib/server').run();
+  require('./server').run();
 };

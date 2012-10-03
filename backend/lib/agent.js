@@ -118,4 +118,4 @@ AgentConnection.prototype.on_dmp = function(json){
   self.conn.write(str_str_len + str);
 };
 
-modules.exports = AgentConnection;
+module.exports = AgentConnection;

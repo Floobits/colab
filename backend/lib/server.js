@@ -36,9 +36,7 @@ ColabServer.prototype.on_conn_end = function(agent){
   console.log('server disconnected');
 };
 
-exports = {
-  run: function(){
-    new ColabServer().listen(3148);
-  }
+exports.run = function(){
+  new ColabServer().listen(3148);
 };
 
