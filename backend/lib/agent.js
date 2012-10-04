@@ -76,13 +76,7 @@ AgentConnection.prototype.on_data = function(d){
   self.buf = msg[1];
   msg = msg[0];
 
-  _.each(self.room.agents, function (v) {
-    if (v.id === self.id) {
-      return;
-    }
-    v.conn.write(msg + "\n");
-  });
-  //self.emit('request', msg);
+  self.emit('request', msg);
 };
 
 AgentConnection.prototype.on_request = function(raw){
