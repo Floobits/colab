@@ -58,7 +58,6 @@ class Conn(asyncore.dispatcher):
             return
         print 'got error'
 
-
     def handle_read(self):
         self.buffer_in += self.recv(1024)
         print (self.buffer_in)
@@ -183,9 +182,7 @@ class JoinChannelCommand(sublime_plugin.TextCommand):
         return self.view
 
     def is_enabled(self):
-        # First, is this actually a file on the file system?
-        if self.view.file_name() and len(self.view.file_name()) > 0:
-            return os.path.realpath(self.get_working_dir())
+        return True
 
     def get_file_name(self):
         return os.path.basename(self.view.file_name())
@@ -204,11 +201,6 @@ class JoinChannelCommand(sublime_plugin.TextCommand):
         # the case of the quick panel.
         # So, this is not necessarily ideal, but it does work.
         return self.view.window() or sublime.active_window()
-
-    def generic_done(self, result):
-        if not result.strip():
-            return
-        self.panel(result)
 
     def _output_to_view(self, output_file, output, clear=False, syntax="Packages/JavaScript/JavaScript.tmLanguage"):
         output_file.set_syntax_file(syntax)
