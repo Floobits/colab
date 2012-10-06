@@ -16,7 +16,6 @@ from twisted.protocols import basic
 
 Q = Queue.Queue()
 BUF = ""
-BUFS = {}
 SOCK = None
 previous = time.time()
 active = True
@@ -32,6 +31,14 @@ def get_view(buf_uid):
             if view.buffer_id() == buf_uid:
                 return view
     return None
+
+
+class DMP(object):
+    def __init__(self, previous, view):
+        self.current = text(view)
+        self.previous = previous
+        self.buffer_id = view.buffer_id()
+        self.file_name = view.file_name()
 
 
 class Conn(basic.LineReceiver):
@@ -64,27 +71,24 @@ class Conn(basic.LineReceiver):
         view.replace(region, t)
 
     def send_patches(self):
-        reported = set()
         while (True):
             try:
-                text = Q.get(True, 1)
+                change_set = Q.get_nowait()
             except Queue.Empty:
                 print "queue is empty"
                 break
-            print('got %s from q' % view)
-            patches = dmp.diff_match_patch().patch_make(BUFS[buf_id], text)
-
-            BUFS[buf_id] = text
+            print('got %s from q' % change_set)
+            patches = dmp.diff_match_patch().patch_make(change_set.current, change_set.previous)
 
             patches = json.dumps([str(x).encode('base64') for x in patches])
             request = {
                 "patches": patches,
                 "uid": 1,
-                "file_name": "blah/blah/blah"
+                "file_name": change_set.file_name
             }
             req = json.dumps(request)
-            print req
             self.sendLine(req)
+            Q.task_done()
         print "scheduling send patches"
         sublime.set_timeout(self.send_patches, 200)
 
@@ -97,8 +101,9 @@ class Conn(basic.LineReceiver):
 
 class ConnFactory(protocol.ClientFactory):
     protocol = Conn
+
     def doStart(self):
-            pass
+        pass
 
     def startedConnecting(self, connectorInstance):
         print connectorInstance
@@ -118,8 +123,33 @@ class ConnFactory(protocol.ClientFactory):
     def doStop(self):
         pass
 
+
 class Listener(sublime_plugin.EventListener):
+    change_q = Queue.Queue()
+    view_state = {}
     url = 'http://fixtheco.de:3149/patch/'
+
+    @staticmethod
+    def q_shuffle():
+        reported = set()
+        while True:
+            try:
+                view = Listener.change_q.get_nowait()
+            except Queue.Empty:
+                print "change queue is empty"
+                break
+
+            buf_id = view.buffer_id()
+            if buf_id in reported:
+                continue
+            change = DMP(Listener.view_state[buf_id], view)
+            reported.add(buf_id)
+            Q.add(change)
+            Listener.change_q.task_done()
+
+        sublime.set_timeout(Listener.q_shuffle, 150)
+
+    #TODO: remove items from view_state on close
 
     def id(self, view):
         return view.buffer_id()
@@ -154,10 +184,10 @@ class Listener(sublime_plugin.EventListener):
 #            return
         print("adding %s" % (view.file_name()))
         buf_id = view.buffer_id()
-        if no_stomp and buf_id in BUFS:
+        if no_stomp and buf_id in self.view_state:
             return False
-        BUFS[buf_id] = text(view)
-        Q.put(text(view))
+        self.view_state[buf_id] = text(view)
+        self.change_q.put(view)
         return True
 
 
@@ -203,7 +233,6 @@ class JoinChannelCommand(sublime_plugin.TextCommand):
         output_file.insert(edit, 0, output)
         output_file.end_edit(edit)
 
-
     def scratch(self, output, title=False, **kwargs):
         scratch_file = self.get_window().new_file()
         if title:
@@ -232,19 +261,15 @@ def unrun():
     reactor.stop()
 
 
-def iterate():
-    reactor.iterate()
-    sublime.set_timeout(iterate, 50)
+sublime.set_timeout(Listener.q_shuffle, 150)
 
-def run():
+
+def twisted_reactor():
     try:
-        conn = Conn()
         reactor.connectTCP('127.0.0.1', 12345, ConnFactory())
-        iterate()
-#        reactor.run()
+        reactor.run()
     except Exception as e:
         print e
 
-run()
-#thread = threading.Thread(target=run)
-#thread.start()
+thread = threading.Thread(target=twisted_reactor)
+thread.start()
