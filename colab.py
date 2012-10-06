@@ -4,13 +4,15 @@ import Queue
 import threading
 import time
 import socket
-import asyncore
 import os
 import sys
 
 import sublime
 import sublime_plugin
 from lib import diff_match_patch as dmp
+
+from twisted.internet import protocol, reactor
+from twisted.protocols import basic
 
 Q = Queue.Queue()
 BUF = ""
@@ -32,44 +34,17 @@ def get_view(buf_uid):
     return None
 
 
-class Conn(asyncore.dispatcher):
+class Conn(basic.LineReceiver):
 
     def __init__(self):
-        asyncore.dispatcher.__init__(self)
-        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connect(('127.0.0.1', 12345))
         self.buffer_out = ""
         self.buffer_in = ""
 
-    def handle_connect(self):
+    def connectionMade(self):
+        print("CONNECTION MADE")
+        self.send_patches()
 
-        # handshake = json.dumps({"uid": os.getpid()}) + '\n'
-        # self.send(handshake)
-        pass
-
-    def handle_close(self):
-        print('closing')
-       # self.close()
-        unrun()
-
-    def handle_error(self, err=None):
-        if err:
-            print(err)
-            return
-        print 'got error'
-
-    def handle_read(self):
-        self.buffer_in += self.recv(1024)
-        print (self.buffer_in)
-
-    def writable(self):
-        return (len(self.buffer_out) > 0)
-
-    def handle_write(self):
-        sent = self.send(self.buffer_out)
-        self.buffer_out = self.buffer_out[sent:]
-
-    def handle_req(self, line):
+    def lineReceived(self, line):
         print 'got request ' % (line)
         req = json.loads(line)
         view = get_view(req.uid)
@@ -92,32 +67,26 @@ class Conn(asyncore.dispatcher):
         reported = set()
         while (True):
             try:
-                view = Q.get_nowait()
+                text = Q.get(True, 1)
             except Queue.Empty:
+                print "queue is empty"
                 break
             print('got %s from q' % view)
-            buf_id = view.buffer_id()
-            if buf_id in reported:
-                continue
-            reported.add(buf_id)
-            t = text(view)
-            patches = dmp.diff_match_patch().patch_make(BUFS[buf_id], t)
-            print('sending report for %s' % (view.file_name()))
+            patches = dmp.diff_match_patch().patch_make(BUFS[buf_id], text)
 
-            BUFS[buf_id] = t
+            BUFS[buf_id] = text
 
             patches = json.dumps([str(x).encode('base64') for x in patches])
             request = {
                 "patches": patches,
-                "uid": buf_id,
-                "file_name": view.file_name()
+                "uid": 1,
+                "file_name": "blah/blah/blah"
             }
-            req = json.dumps(request) + '\n'
-            BUFS[buf_id] = t
+            req = json.dumps(request)
             print req
-            self.buffer_out += req
-        if active:
-            sublime.set_timeout(self.send_patches, 3000)
+            self.sendLine(req)
+        print "scheduling send patches"
+        sublime.set_timeout(self.send_patches, 200)
 
     def recv_patches(self):
         for line in self.buffer_in.split('\n'):
@@ -125,6 +94,29 @@ class Conn(asyncore.dispatcher):
                 return
             self.handle_req(line)
 
+
+class ConnFactory(protocol.ClientFactory):
+    protocol = Conn
+    def doStart(self):
+            pass
+
+    def startedConnecting(self, connectorInstance):
+        print connectorInstance
+
+    def buildProtocol(self, address):
+        print address
+        return self.protocol()
+
+    def clientConnectionLost(self, connection, reason):
+        print reason
+        print connection
+
+    def clientConnectionFailed(self, connection, reason):
+        print connection
+        print reason
+
+    def doStop(self):
+        pass
 
 class Listener(sublime_plugin.EventListener):
     url = 'http://fixtheco.de:3149/patch/'
@@ -158,14 +150,14 @@ class Listener(sublime_plugin.EventListener):
     def add(self, view, no_stomp=False):
         if view.is_scratch():
             return
-        if not active:
-            return
+#        if not active:
+#            return
         print("adding %s" % (view.file_name()))
         buf_id = view.buffer_id()
         if no_stomp and buf_id in BUFS:
             return False
         BUFS[buf_id] = text(view)
-        Q.put(view)
+        Q.put(text(view))
         return True
 
 
@@ -211,6 +203,7 @@ class JoinChannelCommand(sublime_plugin.TextCommand):
         output_file.insert(edit, 0, output)
         output_file.end_edit(edit)
 
+
     def scratch(self, output, title=False, **kwargs):
         scratch_file = self.get_window().new_file()
         if title:
@@ -236,16 +229,22 @@ def unrun():
     global active
     active = False
     print('bailing')
-    sys.exit(1)
+    reactor.stop()
 
+
+def iterate():
+    reactor.iterate()
+    sublime.set_timeout(iterate, 50)
 
 def run():
     try:
         conn = Conn()
-        sublime.set_timeout(conn.send_patches, 3000)
-        asyncore.loop()
+        reactor.connectTCP('127.0.0.1', 12345, ConnFactory())
+        iterate()
+#        reactor.run()
     except Exception as e:
         print e
 
-thread = threading.Thread(target=run)
-thread.start()
+run()
+#thread = threading.Thread(target=run)
+#thread.start()
