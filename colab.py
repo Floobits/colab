@@ -3,9 +3,7 @@ import json
 import Queue
 import threading
 import time
-import socket
 import os
-import sys
 
 import sublime
 import sublime_plugin
@@ -13,12 +11,6 @@ from lib import diff_match_patch as dmp
 
 from twisted.internet import protocol, reactor
 from twisted.protocols import basic
-
-Q = Queue.Queue()
-BUF = ""
-SOCK = None
-previous = time.time()
-active = True
 
 
 def text(view):
@@ -40,12 +32,16 @@ class DMP(object):
         self.buffer_id = view.buffer_id()
         self.file_name = view.file_name()
 
+    def __str__(self):
+        return "%s - %s" % (self.file_name, self.buffer_id)
+
 
 class Conn(basic.LineReceiver):
+    Q = Queue.Queue()
 
-    def __init__(self):
-        self.buffer_out = ""
-        self.buffer_in = ""
+    @staticmethod
+    def add(item):
+        Conn.Q.put(item)
 
     def connectionMade(self):
         print("CONNECTION MADE")
@@ -73,9 +69,8 @@ class Conn(basic.LineReceiver):
     def send_patches(self):
         while (True):
             try:
-                change_set = Q.get_nowait()
+                change_set = self.Q.get_nowait()
             except Queue.Empty:
-                print "queue is empty"
                 break
             print('got %s from q' % change_set)
             patches = dmp.diff_match_patch().patch_make(change_set.current, change_set.previous)
@@ -88,8 +83,7 @@ class Conn(basic.LineReceiver):
             }
             req = json.dumps(request)
             self.sendLine(req)
-            Q.task_done()
-        print "scheduling send patches"
+            self.Q.task_done()
         sublime.set_timeout(self.send_patches, 200)
 
     def recv_patches(self):
@@ -136,17 +130,15 @@ class Listener(sublime_plugin.EventListener):
             try:
                 view = Listener.change_q.get_nowait()
             except Queue.Empty:
-                print "change queue is empty"
                 break
-
+            print('Listener queue item: %s' % view)
             buf_id = view.buffer_id()
             if buf_id in reported:
                 continue
             change = DMP(Listener.view_state[buf_id], view)
             reported.add(buf_id)
-            Q.add(change)
+            Conn.add(change)
             Listener.change_q.task_done()
-
         sublime.set_timeout(Listener.q_shuffle, 150)
 
     #TODO: remove items from view_state on close
