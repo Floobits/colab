@@ -32,98 +32,120 @@ def get_view(buf_uid):
     return None
 
 
-class Conn(asyncore.dispatcher):
+class AgentConnection(object):
+    """ Simple chat server using select """
+    Q = Queue.Queue()
 
     def __init__(self):
-        asyncore.dispatcher.__init__(self)
-        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connect(('127.0.0.1', 12345))
-        self.buffer_out = ""
-        self.buffer_in = ""
+        self.sock = None
+        self.buf = buf
 
-    def handle_connect(self):
+    @staticmethod
+    def add_to_queue(item):
+        AgentConnection.Q.put(item)
 
-        # handshake = json.dumps({"uid": os.getpid()}) + '\n'
-        # self.send(handshake)
-        pass
+    def connect(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect(('127.0.0.1', 12345))
 
-    def handle_close(self):
-        print('closing')
-       # self.close()
-        unrun()
-
-    def handle_error(self, err=None):
-        if err:
-            print(err)
-            return
-        print 'got error'
-
-    def handle_read(self):
-        self.buffer_in += self.recv(1024)
-        print (self.buffer_in)
-
-    def writable(self):
-        return (len(self.buffer_out) > 0)
-
-    def handle_write(self):
-        sent = self.send(self.buffer_out)
-        self.buffer_out = self.buffer_out[sent:]
-
-    def handle_req(self, line):
-        print 'got request ' % (line)
-        req = json.loads(line)
-        view = get_view(req.uid)
-        if not view:
-            print 'no view found for req: %s' % (req)
-            return
-        #get patch obj
-        patches = []
-        for patch in req.patches:
-            patches.append(dmp.patch_fromText(patch))
-        #get text
-        t = text(view)
-        #apply patch to text
-        t = dmp.patch_apply(patches, t)
-        #update buffer
-        region = sublime.Region(0, view.size())
-        view.replace(region, t)
-
-    def send_patches(self):
-        reported = set()
-        while (True):
+    def get_patches(self):
+        while True
             try:
-                view = Q.get_nowait()
+                yield self.Q.get()
             except Queue.Empty:
                 break
-            print('got %s from q' % view)
-            buf_id = view.buffer_id()
-            if buf_id in reported:
-                continue
-            reported.add(buf_id)
-            t = text(view)
-            patches = dmp.diff_match_patch().patch_make(BUFS[buf_id], t)
-            print('sending report for %s' % (view.file_name()))
 
-            BUFS[buf_id] = t
+    def protocol(self, req):
+        self.buf += req
+        if not self.buf:
+            return
+        reqs = []
+        while True:
+            before,sep,after = self.buf.partition('\n')
+            if not sep:
+                break
+            reqs.append(before)
+            self.buf = after
 
-            patches = json.dumps([str(x).encode('base64') for x in patches])
-            request = {
-                "patches": patches,
-                "uid": buf_id,
-                "file_name": view.file_name()
-            }
-            req = json.dumps(request) + '\n'
-            BUFS[buf_id] = t
-            print req
-            self.buffer_out += req
-        if active:
-            sublime.set_timeout(self.send_patches, 3000)
+    def select(self):
+        if not self.sock:
+            return
 
-    def recv_patches(self):
-        for line in self.buffer_in.split('\n'):
-            if not line:
+        while True:
+
+            # try:
+            _in,_out,_except = select.select([self.sock], [self.sock], [self.sock])
+            # except select.error as e:
+            #     break
+            # except socket.error as e:
+            #     break
+
+            if _except:
+                print('socket error')
+                self.sock.close()
                 return
-            self.handle_req(line)
+
+            if _in:
+                buf = self.sock.recv()
+                if not buf:
+                    print('disconnect')
+                    self.sock.close()
+                self.protocol(buf)
+
+            if _out:
+                for patch in self.get_patches():
+                    print('writing a patch')
+                    self.sock.sendall(patch)
+
+
+
+    #     patches = []
+    #     for patch in req.patches:
+    #         patches.append(dmp.patch_fromText(patch))
+    #     #get text
+    #     t = text(view)
+    #     #apply patch to text
+    #     t = dmp.patch_apply(patches, t)
+    #     #update buffer
+    #     region = sublime.Region(0, view.size())
+    #     view.replace(region, t)
+
+    # def send_patches(self):
+    #     reported = set()
+    #     while (True):
+    #         try:
+    #             view = Q.get_nowait()
+    #         except Queue.Empty:
+    #             break
+    #         print('got %s from q' % view)
+    #         buf_id = view.buffer_id()
+    #         if buf_id in reported:
+    #             continue
+    #         reported.add(buf_id)
+    #         t = text(view)
+    #         patches = dmp.diff_match_patch().patch_make(BUFS[buf_id], t)
+    #         print('sending report for %s' % (view.file_name()))
+
+    #         BUFS[buf_id] = t
+
+    #         patches = json.dumps([str(x).encode('base64') for x in patches])
+    #         request = {
+    #             "patches": patches,
+    #             "uid": buf_id,
+    #             "file_name": view.file_name()
+    #         }
+    #         req = json.dumps(request) + '\n'
+    #         BUFS[buf_id] = t
+    #         print req
+    #         self.buffer_out += req
+    #     if active:
+    #         sublime.set_timeout(self.send_patches, 3000)
+
+    # def recv_patches(self):
+    #     for line in self.buffer_in.split('\n'):
+    #         if not line:
+    #             return
+    #         self.handle_req(line)
 
 
 class Listener(sublime_plugin.EventListener):
