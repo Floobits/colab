@@ -55,7 +55,7 @@ class AgentConnection(object):
     def get_patches(self):
         while True:
             try:
-                yield self.Q.get()
+                yield self.Q.get_nowait()
             except Queue.Empty:
                 break
 
@@ -75,7 +75,6 @@ class AgentConnection(object):
         if not self.sock:
             print('no sock')
             return
-        print('selecting')
               # try:
         # this blocks until the socket is readable or writeable
         _in, _out, _except = select.select([self.sock], [self.sock], [self.sock])
@@ -83,13 +82,13 @@ class AgentConnection(object):
         #     break
         # except socket.error as e:
         #     break
-        print('post select.select')
         if _except:
             print('socket error')
             self.sock.close()
             return
 
         if _in:
+            print('reading socket')
             buf = self.sock.recv()
             if not buf:
                 print('disconnect')
@@ -97,12 +96,14 @@ class AgentConnection(object):
             self.protocol(buf)
 
         if _out:
+            print('writing socket')
             for patch in self.get_patches():
                 print('writing a patch')
                 self.sock.sendall(patch)
 
         sublime.set_timeout(self.select, 100)
-        
+
+
 class Listener(sublime_plugin.EventListener):
     Q = Queue.Queue()
     BUFS = {}
@@ -113,9 +114,11 @@ class Listener(sublime_plugin.EventListener):
         reported = set()
         while True:
             try:
-                view = Listener.Q.get()
+                view = Listener.Q.get_nowait()
             except Queue.Empty:
                 break
+
+            print('got view %s' % view)
 
             buf_id = view.buffer_id()
             if buf_id in reported:
@@ -226,6 +229,7 @@ class JoinChannelCommand(sublime_plugin.TextCommand):
         self.get_window().show_quick_panel(*args, **kwargs)
 
 sublime.set_timeout(Listener.push, 200)
+
 
 def run_agent():
     try:
