@@ -1,23 +1,13 @@
 
-import json
 import Queue
 import threading
-import time
 import socket
-import asyncore
 import os
-import sys
+import select
 
 import sublime
 import sublime_plugin
 from lib import diff_match_patch as dmp
-
-Q = Queue.Queue()
-BUF = ""
-BUFS = {}
-SOCK = None
-previous = time.time()
-active = True
 
 
 def text(view):
@@ -32,13 +22,24 @@ def get_view(buf_uid):
     return None
 
 
+class DMP(object):
+    def __init__(self, previous, view):
+        self.current = text(view)
+        self.previous = previous
+        self.buffer_id = view.buffer_id()
+        self.file_name = view.file_name()
+
+    def __str__(self):
+        return "%s - %s" % (self.file_name, self.buffer_id)
+
+
 class AgentConnection(object):
     """ Simple chat server using select """
     Q = Queue.Queue()
 
     def __init__(self):
         self.sock = None
-        self.buf = buf
+        self.buf = ""
 
     @staticmethod
     def add_to_queue(item):
@@ -46,10 +47,13 @@ class AgentConnection(object):
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #self.sock.setblocking(0)
         self.sock.connect(('127.0.0.1', 12345))
+        print(self.sock)
+        self.select()
 
     def get_patches(self):
-        while True
+        while True:
             try:
                 yield self.Q.get()
             except Queue.Empty:
@@ -61,7 +65,7 @@ class AgentConnection(object):
             return
         reqs = []
         while True:
-            before,sep,after = self.buf.partition('\n')
+            before, sep, after = self.buf.partition('\n')
             if not sep:
                 break
             reqs.append(before)
@@ -69,87 +73,57 @@ class AgentConnection(object):
 
     def select(self):
         if not self.sock:
+            print('no sock')
+            return
+        print('selecting')
+              # try:
+        # this blocks until the socket is readable or writeable
+        _in, _out, _except = select.select([self.sock], [self.sock], [self.sock])
+        # except select.error as e:
+        #     break
+        # except socket.error as e:
+        #     break
+        print('post select.select')
+        if _except:
+            print('socket error')
+            self.sock.close()
             return
 
-        while True:
-
-            # try:
-            _in,_out,_except = select.select([self.sock], [self.sock], [self.sock])
-            # except select.error as e:
-            #     break
-            # except socket.error as e:
-            #     break
-
-            if _except:
-                print('socket error')
+        if _in:
+            buf = self.sock.recv()
+            if not buf:
+                print('disconnect')
                 self.sock.close()
-                return
+            self.protocol(buf)
 
-            if _in:
-                buf = self.sock.recv()
-                if not buf:
-                    print('disconnect')
-                    self.sock.close()
-                self.protocol(buf)
+        if _out:
+            for patch in self.get_patches():
+                print('writing a patch')
+                self.sock.sendall(patch)
 
-            if _out:
-                for patch in self.get_patches():
-                    print('writing a patch')
-                    self.sock.sendall(patch)
-
-
-
-    #     patches = []
-    #     for patch in req.patches:
-    #         patches.append(dmp.patch_fromText(patch))
-    #     #get text
-    #     t = text(view)
-    #     #apply patch to text
-    #     t = dmp.patch_apply(patches, t)
-    #     #update buffer
-    #     region = sublime.Region(0, view.size())
-    #     view.replace(region, t)
-
-    # def send_patches(self):
-    #     reported = set()
-    #     while (True):
-    #         try:
-    #             view = Q.get_nowait()
-    #         except Queue.Empty:
-    #             break
-    #         print('got %s from q' % view)
-    #         buf_id = view.buffer_id()
-    #         if buf_id in reported:
-    #             continue
-    #         reported.add(buf_id)
-    #         t = text(view)
-    #         patches = dmp.diff_match_patch().patch_make(BUFS[buf_id], t)
-    #         print('sending report for %s' % (view.file_name()))
-
-    #         BUFS[buf_id] = t
-
-    #         patches = json.dumps([str(x).encode('base64') for x in patches])
-    #         request = {
-    #             "patches": patches,
-    #             "uid": buf_id,
-    #             "file_name": view.file_name()
-    #         }
-    #         req = json.dumps(request) + '\n'
-    #         BUFS[buf_id] = t
-    #         print req
-    #         self.buffer_out += req
-    #     if active:
-    #         sublime.set_timeout(self.send_patches, 3000)
-
-    # def recv_patches(self):
-    #     for line in self.buffer_in.split('\n'):
-    #         if not line:
-    #             return
-    #         self.handle_req(line)
-
-
+        sublime.set_timeout(self.select, 100)
+        
 class Listener(sublime_plugin.EventListener):
+    Q = Queue.Queue()
+    BUFS = {}
     url = 'http://fixtheco.de:3149/patch/'
+
+    @staticmethod
+    def push():
+        reported = set()
+        while True:
+            try:
+                view = Listener.Q.get()
+            except Queue.Empty:
+                break
+
+            buf_id = view.buffer_id()
+            if buf_id in reported:
+                continue
+            reported.add(buf_id)
+
+            patch = DMP(Listener.BUFS[buf_id], view)
+            AgentConnection.add_to_queue(patch)
 
     def id(self, view):
         return view.buffer_id()
@@ -180,14 +154,12 @@ class Listener(sublime_plugin.EventListener):
     def add(self, view, no_stomp=False):
         if view.is_scratch():
             return
-        if not active:
-            return
         print("adding %s" % (view.file_name()))
         buf_id = view.buffer_id()
-        if no_stomp and buf_id in BUFS:
+        if no_stomp and buf_id in self.BUFS:
             return False
-        BUFS[buf_id] = text(view)
-        Q.put(view)
+        self.BUFS[buf_id] = text(view)
+        self.Q.put(view)
         return True
 
 
@@ -253,21 +225,14 @@ class JoinChannelCommand(sublime_plugin.TextCommand):
     def quick_panel(self, *args, **kwargs):
         self.get_window().show_quick_panel(*args, **kwargs)
 
+sublime.set_timeout(Listener.push, 200)
 
-def unrun():
-    global active
-    active = False
-    print('bailing')
-    sys.exit(1)
-
-
-def run():
+def run_agent():
     try:
-        conn = Conn()
-        sublime.set_timeout(conn.send_patches, 3000)
-        asyncore.loop()
+        agent = AgentConnection()
+        agent.connect()
     except Exception as e:
         print e
 
-thread = threading.Thread(target=run)
+thread = threading.Thread(target=run_agent)
 thread.start()
