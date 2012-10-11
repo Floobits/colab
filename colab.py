@@ -96,7 +96,6 @@ class AgentConnection(object):
             self.protocol(buf)
 
         if _out:
-            print('writing socket')
             for patch in self.get_patches():
                 print('writing a patch')
                 self.sock.sendall(patch)
