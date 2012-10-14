@@ -4,6 +4,8 @@ import threading
 import socket
 import os
 import select
+import json
+import collections
 
 import sublime
 import sublime_plugin
@@ -24,38 +26,56 @@ def get_view(buf_uid):
 
 class DMP(object):
     def __init__(self, previous, view):
-        self.current = text(view)
-        self.previous = previous
         self.buffer_id = view.buffer_id()
         self.file_name = view.file_name()
+        self.current = text(view)
+        self.previous = previous
 
     def __str__(self):
         return "%s - %s" % (self.file_name, self.buffer_id)
 
+    def patch(self):
+        return dmp.diff_match_patch().patch_make(self.previous, self.current)
+
+    def to_json(self):
+        return json.dumps({
+                'uid': str(self.buffer_id),
+                'file_name': self.file_name,
+                'current': self.current,
+                'patch': json.dumps([str(x).encode('base64') for x in self.patch()])
+            })
+
+PATCH_Q = Queue.Queue()
+
 
 class AgentConnection(object):
     """ Simple chat server using select """
-    Q = Queue.Queue()
 
     def __init__(self):
         self.sock = None
         self.buf = ""
 
     @staticmethod
-    def add_to_queue(item):
-        AgentConnection.Q.put(item)
+    def put(item):
+        PATCH_Q.put(item)
+        qsize = PATCH_Q.qsize()
+        if qsize > 0:
+            print('%s items in q' % qsize)
+
+    def reconnect(self):
+        sublime.set_timeout(self.connect, 100)
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         #self.sock.setblocking(0)
         self.sock.connect(('127.0.0.1', 12345))
-        print(self.sock)
+        print('connected, calling select')
         self.select()
 
     def get_patches(self):
         while True:
             try:
-                yield self.Q.get_nowait()
+                yield PATCH_Q.get_nowait()
             except Queue.Empty:
                 break
 
@@ -63,28 +83,28 @@ class AgentConnection(object):
         self.buf += req
         if not self.buf:
             return
-        reqs = []
+        patches = []
         while True:
             before, sep, after = self.buf.partition('\n')
             if not sep:
                 break
-            reqs.append(before)
+            patches.append(before)
             self.buf = after
+        if patches:
+            Listener.apply_patches(patches)
 
     def select(self):
         if not self.sock:
             print('no sock')
             return
-              # try:
+
         # this blocks until the socket is readable or writeable
         _in, _out, _except = select.select([self.sock], [self.sock], [self.sock])
-        # except select.error as e:
-        #     break
-        # except socket.error as e:
-        #     break
+
         if _except:
             print('socket error')
             self.sock.close()
+            self.reconnect()
             return
 
         if _in:
@@ -98,14 +118,15 @@ class AgentConnection(object):
         if _out:
             for patch in self.get_patches():
                 print('writing a patch')
-                self.sock.sendall(patch)
+                self.sock.sendall(patch.to_json())
+                PATCH_Q.task_done()
 
         sublime.set_timeout(self.select, 100)
 
 
 class Listener(sublime_plugin.EventListener):
     Q = Queue.Queue()
-    BUFS = {}
+    BUFS = collections.defaultdict(str)
     url = 'http://fixtheco.de:3149/patch/'
 
     @staticmethod
@@ -117,15 +138,29 @@ class Listener(sublime_plugin.EventListener):
             except Queue.Empty:
                 break
 
-            print('got view %s' % view)
-
             buf_id = view.buffer_id()
             if buf_id in reported:
                 continue
-            reported.add(buf_id)
 
+            reported.add(buf_id)
             patch = DMP(Listener.BUFS[buf_id], view)
-            AgentConnection.add_to_queue(patch)
+            print('puting dmp %s' % patch)
+            #update the current copy of the buffer 
+            Listener.BUFS[buf_id] = patch.current
+            PATCH_Q.put(patch)
+            print(PATCH_Q.qsize())
+
+        sublime.set_timeout(Listener.push, 100)
+
+    @staticmethod
+    def apply_patches(self, patches):
+        # dmp.patch_fromText(before)
+        # t = dmp.patch_apply(patches, t)
+        # #get text
+        # t = text(view)
+        # #apply patch to text
+        # t = dmp.patch_apply(patches, t)
+        pass
 
     def id(self, view):
         return view.buffer_id()
@@ -145,24 +180,22 @@ class Listener(sublime_plugin.EventListener):
         print 'clone', self.name(view)
 
     def on_modified(self, view):
-        self.add(view, True)
+        self.add(view)
 
     def on_activated(self, view):
         if view.is_scratch():
             return
-        self.add(view, True)
+        self.add(view)
         print 'activated', self.name(view)
 
-    def add(self, view, no_stomp=False):
+    def add(self, view):
         if view.is_scratch():
+            print('is scratch')
             return
-        print("adding %s" % (view.file_name()))
         buf_id = view.buffer_id()
-        if no_stomp and buf_id in self.BUFS:
-            return False
+        print("adding %s" % (view.file_name()))
         self.BUFS[buf_id] = text(view)
         self.Q.put(view)
-        return True
 
 
 class JoinChannelCommand(sublime_plugin.TextCommand):
@@ -227,7 +260,7 @@ class JoinChannelCommand(sublime_plugin.TextCommand):
     def quick_panel(self, *args, **kwargs):
         self.get_window().show_quick_panel(*args, **kwargs)
 
-sublime.set_timeout(Listener.push, 200)
+Listener.push()
 
 
 def run_agent():
