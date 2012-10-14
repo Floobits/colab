@@ -11,6 +11,9 @@ import sublime
 import sublime_plugin
 from lib import diff_match_patch as dmp
 
+PATCH_Q = Queue.Queue()
+BUF_STATE = collections.defaultdict(str)
+
 
 def text(view):
     return view.substr(sublime.Region(0, view.size()))
@@ -25,27 +28,26 @@ def get_view(buf_uid):
 
 
 class DMP(object):
-    def __init__(self, previous, view):
+    def __init__(self, view):
         self.buffer_id = view.buffer_id()
         self.file_name = view.file_name()
         self.current = text(view)
-        self.previous = previous
+        self.previous = BUF_STATE[self.buffer_id]
 
     def __str__(self):
         return "%s - %s" % (self.file_name, self.buffer_id)
 
     def patch(self):
-        return dmp.diff_match_patch().patch_make(self.previous, self.current)
+        p = dmp.diff_match_patch().patch_make(self.previous, self.current)
+        print self.previous == self.current, p
+        return p
 
     def to_json(self):
         return json.dumps({
                 'uid': str(self.buffer_id),
                 'file_name': self.file_name,
-                'current': self.current,
                 'patch': json.dumps([str(x).encode('base64') for x in self.patch()])
             })
-
-PATCH_Q = Queue.Queue()
 
 
 class AgentConnection(object):
@@ -117,38 +119,33 @@ class AgentConnection(object):
 
         if _out:
             for patch in self.get_patches():
-                print('writing a patch')
-                self.sock.sendall(patch.to_json())
+                p = patch.to_json()
+                print('writing a patch', p)
+                self.sock.sendall(p)
                 PATCH_Q.task_done()
 
         sublime.set_timeout(self.select, 100)
 
 
 class Listener(sublime_plugin.EventListener):
-    Q = Queue.Queue()
-    BUFS = collections.defaultdict(str)
+    views_changed = []
     url = 'http://fixtheco.de:3149/patch/'
 
     @staticmethod
     def push():
         reported = set()
-        while True:
-            try:
-                view = Listener.Q.get_nowait()
-            except Queue.Empty:
-                break
+        while Listener.views_changed:
+            view = Listener.views_changed.pop()
 
             buf_id = view.buffer_id()
             if buf_id in reported:
                 continue
 
             reported.add(buf_id)
-            patch = DMP(Listener.BUFS[buf_id], view)
-            print('puting dmp %s' % patch)
-            #update the current copy of the buffer 
-            Listener.BUFS[buf_id] = patch.current
+            patch = DMP(view)
+            #update the current copy of the buffer
+            BUF_STATE[buf_id] = patch.current
             PATCH_Q.put(patch)
-            print(PATCH_Q.qsize())
 
         sublime.set_timeout(Listener.push, 100)
 
@@ -192,10 +189,7 @@ class Listener(sublime_plugin.EventListener):
         if view.is_scratch():
             print('is scratch')
             return
-        buf_id = view.buffer_id()
-        print("adding %s" % (view.file_name()))
-        self.BUFS[buf_id] = text(view)
-        self.Q.put(view)
+        self.views_changed.append(view)
 
 
 class JoinChannelCommand(sublime_plugin.TextCommand):
