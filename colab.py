@@ -38,9 +38,7 @@ class DMP(object):
         return "%s - %s" % (self.file_name, self.buffer_id)
 
     def patch(self):
-        p = dmp.diff_match_patch().patch_make(self.previous, self.current)
-        print self.previous == self.current, p
-        return p
+        return dmp.diff_match_patch().patch_make(self.previous, self.current)
 
     def to_json(self):
         return json.dumps({
