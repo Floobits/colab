@@ -124,7 +124,7 @@ class AgentConnection(object):
             for patch in self.get_patches():
                 p = patch.to_json()
                 print('writing a patch', p)
-                self.sock.sendall(p)
+                self.sock.sendall(p + '\n')
                 PATCH_Q.task_done()
 
         sublime.set_timeout(self.select, 100)
