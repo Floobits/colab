@@ -6,23 +6,37 @@ import os
 import select
 import json
 import collections
+import os.path
 
 import sublime
 import sublime_plugin
 from lib import diff_match_patch as dmp
 
+settings = sublime.load_settings('coLab.sublime-settings')
+COLAB_DIR = settings.get('share_dir', '~/.colab/share')
+
 PATCH_Q = Queue.Queue()
 BUF_STATE = collections.defaultdict(str)
+
+
+def get_full_path(p):
+    full_path = os.path.join(COLAB_DIR, p)
+    return unfuck_path(full_path)
+
+
+def unfuck_path(p):
+    return os.path.normcase(os.path.normpath(p))
 
 
 def text(view):
     return view.substr(sublime.Region(0, view.size()))
 
 
-def get_view(buf_uid):
+def get_view_from_path(path):
     for window in sublime.windows():
         for view in window.views():
-            if view.buffer_id() == buf_uid:
+            view_path = unfuck_path(view.file_name())
+            if view_path == path:
                 return view
     return None
 
@@ -30,7 +44,8 @@ def get_view(buf_uid):
 class DMP(object):
     def __init__(self, view):
         self.buffer_id = view.buffer_id()
-        self.file_name = view.file_name()
+        #to rel path
+        self.file_name = view.file_name()[len(COLAB_DIR):]
         self.current = text(view)
         self.previous = BUF_STATE[self.buffer_id]
 
@@ -44,7 +59,7 @@ class DMP(object):
         return json.dumps({
                 'uid': str(self.buffer_id),
                 'file_name': self.file_name,
-                'patch': json.dumps([str(x).encode('base64') for x in self.patch()])
+                'patch': self.patch()
             })
 
 
@@ -139,6 +154,7 @@ class AgentConnection(object):
 class Listener(sublime_plugin.EventListener):
     views_changed = []
     url = 'http://fixtheco.de:3149/patch/'
+    uid_to_buf_id = {}
 
     @staticmethod
     def push():
@@ -160,13 +176,16 @@ class Listener(sublime_plugin.EventListener):
 
     @staticmethod
     def apply_patches(self, patches):
-        dmp.patch_fromText(before)
-        t = dmp.patch_apply(patches, t)
-        #get text
-        t = text(view)
-        #apply patch to text
-        t = dmp.patch_apply(patches, t)
-        pass
+        for patch in patches:
+            patch = json.loads(patch)
+            path = get_full_path(patch['file_name'])
+            view = get_view_from_path(path)
+            if not view:
+                window = sublime.active_window()
+                view = window.openFile(path)
+            dmp_patch = dmp.patch_fromText(patch['patch'])
+            t = dmp.patch_apply(dmp_patch, text(view))
+            view.replace(sublime.Region(0, view.size()), t)
 
     def id(self, view):
         return view.buffer_id()
@@ -198,7 +217,10 @@ class Listener(sublime_plugin.EventListener):
         if view.is_scratch():
             print('is scratch')
             return
-        self.views_changed.append(view)
+        p = os.path.normcase(os.path.normpath(view.file_name() or view.name()))
+        print p
+        if p.find(COLAB_DIR, 0, len(COLAB_DIR)) == 0:
+            self.views_changed.append(view)
 
 
 class JoinChannelCommand(sublime_plugin.TextCommand):
