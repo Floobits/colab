@@ -133,10 +133,14 @@ class AgentConnection(object):
         if _in:
             buf = ""
             while True:
-                d = self.sock.recv(4096)
-                if not d:
-                    break
-                buf += d
+                try:
+                    d = self.sock.recv(4096)
+                except socket.error:
+                    return sublime.set_timeout(self.select, 100)
+                else:
+                    if not d:
+                        break
+                    buf += d
             if not buf:
                 return self.reconnect()
             self.protocol(buf)
