@@ -108,7 +108,6 @@ class AgentConnection(object):
             return
 
         if _in:
-            print('reading socket')
             buf = ""
             try:
                 while True:
@@ -119,6 +118,7 @@ class AgentConnection(object):
             except Exception as e:
                 print "exception", e
             self.protocol(buf)
+            print "data", buf
 
         if _out:
             for patch in self.get_patches():
