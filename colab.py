@@ -17,6 +17,7 @@ COLAB_DIR = settings.get('share_dir', '~/.colab/share')
 
 PATCH_Q = Queue.Queue()
 BUF_STATE = collections.defaultdict(str)
+MODIFIED_EVENTS = Queue.Queue()
 
 
 def get_full_path(p):
@@ -202,6 +203,7 @@ class Listener(sublime_plugin.EventListener):
             if t[1][0]:
                 region = sublime.Region(0, view.size())
                 print "region", region
+                MODIFIED_EVENTS.put(1)
                 edit = view.begin_edit()
                 view.replace(edit, region, str(t[0]))
             else:
@@ -225,6 +227,8 @@ class Listener(sublime_plugin.EventListener):
         print 'clone', self.name(view)
 
     def on_modified(self, view):
+        if MODIFIED_EVENTS.get_nowait():
+            return
         self.add(view)
 
     def on_activated(self, view):
