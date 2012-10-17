@@ -25,6 +25,7 @@ def get_full_path(p):
 
 
 def unfuck_path(p):
+    print "unfucking", p
     return os.path.normcase(os.path.normpath(p))
 
 
@@ -56,10 +57,11 @@ class DMP(object):
         return dmp.diff_match_patch().patch_make(self.previous, self.current)
 
     def to_json(self):
+        print "patch", self.patch()
         return json.dumps({
                 'uid': str(self.buffer_id),
                 'file_name': self.file_name,
-                'patch': self.patch()
+                'patch': [str(x) for x in self.patch()]
             })
 
 
@@ -173,7 +175,7 @@ class Listener(sublime_plugin.EventListener):
         sublime.set_timeout(Listener.push, 100)
 
     @staticmethod
-    def apply_patches(self, patches):
+    def apply_patches(patches):
         for patch in patches:
             patch = json.loads(patch)
             path = get_full_path(patch['file_name'])
@@ -182,6 +184,7 @@ class Listener(sublime_plugin.EventListener):
                 window = sublime.active_window()
                 view = window.openFile(path)
             dmp_patch = dmp.patch_fromText(patch['patch'])
+            # TODO: run this in a separate thread
             t = dmp.patch_apply(dmp_patch, text(view))
             view.replace(sublime.Region(0, view.size()), t)
 
@@ -215,11 +218,13 @@ class Listener(sublime_plugin.EventListener):
         if view.is_scratch():
             print('is scratch')
             return
-        p = os.path.normcase(os.path.normpath(view.file_name() or view.name()))
+        p = unfuck_path(view.file_name() or view.name())
+        print "file_name %s view name %s p %s" % (view.file_name(), view.name(), p)
         print p
         if p.find(COLAB_DIR, 0, len(COLAB_DIR)) == 0:
             self.views_changed.append(view)
-
+        else:
+            print "%s isn't in %s. not sending patch" % (COLAB_DIR, p)
 
 class JoinChannelCommand(sublime_plugin.TextCommand):
     def run(self, *args, **kwargs):
