@@ -36,7 +36,10 @@ def text(view):
 def get_view_from_path(path):
     for window in sublime.windows():
         for view in window.views():
-            view_path = unfuck_path(view.file_name())
+            file_name = view.file_name()
+            if not file_name:
+                continue
+            view_path = unfuck_path(file_name)
             if view_path == path:
                 return view
     return None
@@ -135,13 +138,13 @@ class AgentConnection(object):
             while True:
                 try:
                     d = self.sock.recv(4096)
-                except socket.error:
-                    return sublime.set_timeout(self.select, 100)
-                else:
                     if not d:
                         break
                     buf += d
+                except socket.error as e:
+                    break
             if not buf:
+                print "buf is empty. reconnecting..."
                 return self.reconnect()
             self.protocol(buf)
 
@@ -186,11 +189,23 @@ class Listener(sublime_plugin.EventListener):
             view = get_view_from_path(path)
             if not view:
                 window = sublime.active_window()
-                view = window.openFile(path)
-            dmp_patch = dmp.patch_fromText(patch['patch'])
+                view = window.open_file(path)
+            DMP = dmp.diff_match_patch()
+            if len(patch['patch']) == 0:
+                print "no patches to apply"
+                return
+            print "patch is", patch['patch']
+            dmp_patch = DMP.patch_fromText(patch['patch'][0])
             # TODO: run this in a separate thread
-            t = dmp.patch_apply(dmp_patch, text(view))
-            view.replace(sublime.Region(0, view.size()), t)
+            t = DMP.patch_apply(dmp_patch, text(view))
+            print "t is ", t
+            if t[1][0]:
+                region = sublime.Region(0, view.size())
+                print "region", region
+                edit = view.begin_edit()
+                view.replace(edit, region, str(t[0]))
+            else:
+                print "FUCK IT"
 
     def id(self, view):
         return view.buffer_id()
