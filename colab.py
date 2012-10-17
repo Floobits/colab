@@ -67,8 +67,8 @@ class AgentConnection(object):
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #self.sock.setblocking(0)
         self.sock.connect(('127.0.0.1', 12345))
+        self.sock.setblocking(0)
         print('connected, calling select')
         self.select()
 
@@ -109,10 +109,15 @@ class AgentConnection(object):
 
         if _in:
             print('reading socket')
-            buf = self.sock.recv()
-            if not buf:
-                print('disconnect')
-                self.sock.close()
+            buf = ""
+            try:
+                while True:
+                    d = self.sock.recv(4096)
+                    if not d:
+                        break
+                    buf += d
+            except Exception as e:
+                print "exception", e
             self.protocol(buf)
 
         if _out:
