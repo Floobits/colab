@@ -63,11 +63,16 @@ class AgentConnection(object):
             print('%s items in q' % qsize)
 
     def reconnect(self):
+        self.sock = None
         sublime.set_timeout(self.connect, 100)
 
     def connect(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect(('127.0.0.1', 12345))
+        try:
+            self.sock.connect(('127.0.0.1', 12345))
+        except socket.error:
+            self.reconnect()
+            return
         self.sock.setblocking(0)
         print('connected, calling select')
         self.select()
@@ -81,8 +86,6 @@ class AgentConnection(object):
 
     def protocol(self, req):
         self.buf += req
-        if not self.buf:
-            return
         patches = []
         while True:
             before, sep, after = self.buf.partition('\n')
@@ -92,10 +95,13 @@ class AgentConnection(object):
             self.buf = after
         if patches:
             Listener.apply_patches(patches)
+        else:
+            print "No patches in", req
 
     def select(self):
         if not self.sock:
             print('no sock')
+            self.reconnect()
             return
 
         # this blocks until the socket is readable or writeable
@@ -154,12 +160,12 @@ class Listener(sublime_plugin.EventListener):
 
     @staticmethod
     def apply_patches(self, patches):
-        # dmp.patch_fromText(before)
-        # t = dmp.patch_apply(patches, t)
-        # #get text
-        # t = text(view)
-        # #apply patch to text
-        # t = dmp.patch_apply(patches, t)
+        dmp.patch_fromText(before)
+        t = dmp.patch_apply(patches, t)
+        #get text
+        t = text(view)
+        #apply patch to text
+        t = dmp.patch_apply(patches, t)
         pass
 
     def id(self, view):
