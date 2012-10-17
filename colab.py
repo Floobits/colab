@@ -227,9 +227,10 @@ class Listener(sublime_plugin.EventListener):
         print 'clone', self.name(view)
 
     def on_modified(self, view):
-        if MODIFIED_EVENTS.get_nowait():
-            return
-        self.add(view)
+        try:
+            MODIFIED_EVENTS.get_nowait()
+        except Queue.Empty:
+            self.add(view)
 
     def on_activated(self, view):
         if view.is_scratch():
