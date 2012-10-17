@@ -130,16 +130,14 @@ class AgentConnection(object):
 
         if _in:
             buf = ""
-            try:
-                while True:
-                    d = self.sock.recv(4096)
-                    if not d:
-                        break
-                    buf += d
-            except Exception as e:
-                print "exception", e
+            while True:
+                d = self.sock.recv(4096)
+                if not d:
+                    break
+                buf += d
+            if not buf:
+                return self.reconnect()
             self.protocol(buf)
-            print "data", buf
 
         if _out:
             for patch in self.get_patches():
