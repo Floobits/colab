@@ -13,7 +13,14 @@ import sublime_plugin
 from lib import diff_match_patch as dmp
 
 settings = sublime.load_settings('coLab.sublime-settings')
-COLAB_DIR = settings.get('share_dir', '~/.colab/share')
+
+COLAB_DIR = ""
+def reload_settings():
+    global COLAB_DIR
+    COLAB_DIR = settings.get('share_dir', '~/.colab/share')
+
+settings.add_on_change('share_dir', reload_settings)
+reload_settings()
 
 PATCH_Q = Queue.Queue()
 BUF_STATE = collections.defaultdict(str)
