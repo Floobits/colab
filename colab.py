@@ -204,10 +204,13 @@ class Listener(sublime_plugin.EventListener):
                 region = sublime.Region(0, view.size())
                 print "region", region
                 MODIFIED_EVENTS.put(1)
-                edit = view.begin_edit()
-                view.replace(edit, region, str(t[0]))
+                try:
+                    edit = view.begin_edit()
+                    view.replace(edit, region, str(t[0]))
+                finally:
+                    view.end_edit(edit)
             else:
-                print "FUCK IT"
+                print "failed to patch"
 
     def id(self, view):
         return view.buffer_id()
@@ -219,7 +222,6 @@ class Listener(sublime_plugin.EventListener):
         print 'new', self.name(view)
 
     def on_load(self, view):
-        #self.add_to_buf(view)
         print 'load', self.name(view)
 
     def on_clone(self, view):
@@ -231,6 +233,8 @@ class Listener(sublime_plugin.EventListener):
             MODIFIED_EVENTS.get_nowait()
         except Queue.Empty:
             self.add(view)
+        else:
+            MODIFIED_EVENTS.task_done()
 
     def on_activated(self, view):
         if view.is_scratch():
