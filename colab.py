@@ -207,7 +207,9 @@ class Listener(sublime_plugin.EventListener):
             print "patch is", patch_data['patch']
             dmp_patch = DMP.patch_fromText(patch_data['patch'][0])
             # TODO: run this in a separate thread
-            t = DMP.patch_apply(dmp_patch, text(view))
+            old_text = text(view)
+            print "old text:", old_text
+            t = DMP.patch_apply(dmp_patch, old_text)
             print "t is ", t
             if t[1][0]:
                 region = sublime.Region(0, view.size())
