@@ -1,4 +1,3 @@
 *.pyc
 node_modules
 npm-debug.log
-coLab.sublime-settings
