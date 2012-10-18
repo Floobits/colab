@@ -7,6 +7,7 @@ import select
 import json
 import collections
 import os.path
+import hashlib
 
 import sublime
 import sublime_plugin
@@ -57,12 +58,12 @@ class DMP(object):
     def __init__(self, view):
         self.buffer_id = view.buffer_id()
         #to rel path
-        self.file_name = view.file_name()[len(COLAB_DIR):]
+        self.path = view.file_name()[len(COLAB_DIR):]
         self.current = text(view)
         self.previous = BUF_STATE[self.buffer_id]
 
     def __str__(self):
-        return "%s - %s" % (self.file_name, self.buffer_id)
+        return "%s - %s" % (self.path, self.buffer_id)
 
     def patch(self):
         return dmp.diff_match_patch().patch_make(self.previous, self.current)
@@ -71,7 +72,8 @@ class DMP(object):
         print "patch", self.patch()
         return json.dumps({
                 'uid': str(self.buffer_id),
-                'file_name': self.file_name,
+                'md5': hashlib.md5(self.current).hexdigest(),
+                'path': self.path,
                 'patch': [str(x) for x in self.patch()]
             })
 
@@ -149,7 +151,7 @@ class AgentConnection(object):
                     if not d:
                         break
                     buf += d
-                except socket.error as e:
+                except socket.error:
                     break
             if not buf:
                 print "buf is empty. reconnecting..."
@@ -190,20 +192,20 @@ class Listener(sublime_plugin.EventListener):
         sublime.set_timeout(Listener.push, 100)
 
     @staticmethod
-    def apply_patches(patches):
-        for patch in patches:
-            patch = json.loads(patch)
-            path = get_full_path(patch['file_name'])
+    def apply_patches(jsons):
+        for line in jsons:
+            patch_data = json.loads(line)
+            path = get_full_path(patch_data['path'])
             view = get_view_from_path(path)
             if not view:
                 window = sublime.active_window()
                 view = window.open_file(path)
             DMP = dmp.diff_match_patch()
-            if len(patch['patch']) == 0:
+            if len(patch_data['patch']) == 0:
                 print "no patches to apply"
                 return
-            print "patch is", patch['patch']
-            dmp_patch = DMP.patch_fromText(patch['patch'][0])
+            print "patch is", patch_data['patch']
+            dmp_patch = DMP.patch_fromText(patch_data['patch'][0])
             # TODO: run this in a separate thread
             t = DMP.patch_apply(dmp_patch, text(view))
             print "t is ", t
@@ -216,6 +218,9 @@ class Listener(sublime_plugin.EventListener):
                     view.replace(edit, region, str(t[0]))
                 finally:
                     view.end_edit(edit)
+                cur_hash = hashlib.md5(t[0]).hexdigest()
+                if cur_hash != patch_data['md5']:
+                    print "new hash %s != expected %s" % (cur_hash, patch_data['md5'])
             else:
                 print "failed to patch"
 
