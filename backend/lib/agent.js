@@ -10,7 +10,7 @@ var createRoom = require('./room').create;
 var SUPPORTED_VERSIONS = ['0.01'];
 
 
-var AgentConnection = function(id, conn, room){
+var AgentConnection = function(id, conn, server){
   var self = this;
 
   events.EventEmitter.call(self);
@@ -18,7 +18,12 @@ var AgentConnection = function(id, conn, room){
   self.id = id;
   self.conn = conn;
   self._bufs = [];
-  self.room = room;
+  self.authenticated = false;
+  self.room = undefined;
+  self.user = undefined;
+  self.server = server;
+  self.auth_timeout = 10000;
+
   // wire events
   conn.on('end', function(){
     // do we need to remove the room listener?
@@ -26,6 +31,7 @@ var AgentConnection = function(id, conn, room){
   });
   conn.on('connect', function () {
     self.buf = "";
+    setTimeout(self.disconnect_unauthed_client.bind(self), self.auth_timeout);
   });
   conn.on('data', self.on_data.bind(self));
 
@@ -40,6 +46,16 @@ var AgentConnection = function(id, conn, room){
 };
 
 util.inherits(AgentConnection, events.EventEmitter);
+
+AgentConnection.prototype.disconnect_unauthed_client = function(){
+  var self = this;
+  if (self.authenticated === true) {
+    console.log("client authed before timeout");
+  } else {
+    console.log("client took too long to auth. disconnecting");
+    self.conn.destroy();
+  }
+};
 
 AgentConnection.prototype.join_room = function(name){
   var self = this;
@@ -63,6 +79,7 @@ AgentConnection.prototype.attending = function(room){
 AgentConnection.prototype.on_data = function(d){
   var self = this;
   var msg;
+  var auth_data;
 
   console.log("d: " + d);
 
@@ -76,14 +93,31 @@ AgentConnection.prototype.on_data = function(d){
   self.buf = msg[1];
   msg = msg[0];
 
-  _.each(self.room.agents, function (v, k) {
-    console.log("agent" + v.id + " self " + self.id);
-    if (v.id === self.id) {
-      return;
+  if (self.authenticated) {
+      _.each(self.room.agents, function (v, k) {
+        console.log("agent" + v.id + " self " + self.id);
+        if (v.id === self.id) {
+          return;
+        }
+        v.conn.write(msg + "\n");
+      });
+    //  self.emit('request', msg);
+  } else {
+    auth_data = JSON.parse(msg);
+    if (_.has(auth_data, "username") &&
+        _.has(auth_data, "secret") &&
+        _.has(auth_data, "room")) {
+      self.username = auth_data.username;
+      self.secret = auth_data.secret;
+      self.room = auth_data.room;
+      /* todo: actually auth against something */
+      self.authenticated = true;
+    } else {
+      console.log("bath auth json. disconnecting client");
+      /* TODO: cancel interval for disconnect_unauthed_client */
+      self.conn.destroy();
     }
-    v.conn.write(msg + "\n");
-  });
-//  self.emit('request', msg);
+  }
 };
 
 AgentConnection.prototype.on_request = function(raw){

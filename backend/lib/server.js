@@ -11,6 +11,7 @@ var ColabServer = function(){
   var self = this;
   self.conn_number = 0;
   self.agents = {};
+  self.rooms = {};
 };
 
 util.inherits(ColabServer, net.Server);
