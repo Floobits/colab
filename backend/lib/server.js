@@ -27,6 +27,7 @@ ColabServer.prototype.on_conn = function(conn){
   var number = ++self.conn_number;
   var agent = new AgentConnection(number, conn, self);
   self.agents[number] = agent;
+  console.log('client', number, 'connected');
   agent.once('on_conn_end', self.on_conn_end.bind(self));
 };
 
