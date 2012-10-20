@@ -112,6 +112,7 @@ AgentConnection.prototype.on_data = function(d){
       self.room = auth_data.room;
       /* todo: actually auth against something */
       self.authenticated = true;
+      console.log("client authenticated. yay!");
     } else {
       console.log("bath auth json. disconnecting client");
       /* TODO: cancel interval for disconnect_unauthed_client */
