@@ -5,42 +5,42 @@ var events = require('events');
 var _ = require('underscore');
 
 var ColabBuffer = require('./buffer');
-var createRoom = require('./room').create;
+var Room = require('./room');
 var log = require('./log');
 
 var SUPPORTED_VERSIONS = ['0.01'];
 
 
-var AgentConnection = function(id, conn, server){
+var AgentConnection = function(id, conn, server) {
   var self = this;
 
   events.EventEmitter.call(self);
 
   self.id = id;
   self.conn = conn;
-  self._bufs = [];
-  self.authenticated = false;
+  self.bufs = null;
   self.room = null;
-  self.user = null;
+  // TODO: one day use a user object
+  self.username = null;
   self.server = server;
+  self.authenticated = false;
   self.auth_timeout = 10000;
-  self.auth_interval = null;
+  self.auth_timeout_id = null;
 
-  // wire events
-  conn.on('end', function(){
+  conn.on('end', function() {
     // do we need to remove the room listener?
     self.emit('on_conn_end', self);
   });
   conn.on('connect', function () {
     self.buf = "";
-    self.auth_interval = setTimeout(self.disconnect_unauthed_client.bind(self), self.auth_timeout);
+    self.auth_timeout_id = setTimeout(self.disconnect_unauthed_client.bind(self), self.auth_timeout);
   });
   conn.on('data', self.on_data.bind(self));
 
-  // internal events
   self.on('request', self.on_request.bind(self));
-  self.on('dmp', function(){
-    if (!self._room){
+  self.on('dmp', function() {
+    if (!self._room) {
+      log.error("dmp emitted but agent isn't in a room!");
       return;
     }
     self._room.emit.call(arguments);
@@ -51,11 +51,14 @@ util.inherits(AgentConnection, events.EventEmitter);
 
 AgentConnection.prototype.disconnect = function() {
   var self = this;
-  clearTimeout(self.auth_interval);
+  clearTimeout(self.auth_timeout_id);
   self.conn.destroy();
+  // TODO: this is sloppy. rooms & servers might want to do something
+  delete self.rooms.agents[self.id];
+  delete self.server.agents[self.id];
 };
 
-AgentConnection.prototype.disconnect_unauthed_client = function(){
+AgentConnection.prototype.disconnect_unauthed_client = function() {
   var self = this;
   if (self.authenticated === true) {
     log.debug("client authed before timeout, but this interval should have been cancelled");
@@ -65,20 +68,7 @@ AgentConnection.prototype.disconnect_unauthed_client = function(){
   }
 };
 
-AgentConnection.prototype.join_room = function(name){
-  var self = this;
-  var room = createRoom(name, self, '777');
-  self._room = room;
-};
-
-AgentConnection.prototype.send_dmp = function(dmp){
-  var self = this;
-  if (self.conn){
-    self.conn.write(dmp);
-  }
-};
-
-AgentConnection.prototype.on_data = function(d){
+AgentConnection.prototype.on_data = function(d) {
   var self = this;
   var msg;
   var auth_data;
@@ -86,7 +76,7 @@ AgentConnection.prototype.on_data = function(d){
   log.debug("d: " + d);
 
   self.buf += d;
-  if (self.buf.indexOf("\n") === -1){
+  if (self.buf.indexOf("\n") === -1) {
     log.debug("buf has no newline");
     return;
   }
@@ -103,28 +93,20 @@ AgentConnection.prototype.on_data = function(d){
         _.has(auth_data, "secret") &&
         _.has(auth_data, "room") &&
         _.has(auth_data, "version")) {
-      if (!_.contains(SUPPORTED_VERSIONS, auth_data.version)){
+      if (!_.contains(SUPPORTED_VERSIONS, auth_data.version)) {
         log.log("unsupported client version. disconnecting");
         self.disconnect();
         return;
       }
 
+      /* TODO: actually auth against something */
       self.username = auth_data.username;
       self.secret = auth_data.secret;
-      self.room = auth_data.room;
-
-      if (!_.has(self.server.rooms, auth_data.room)) {
-        self.server.rooms[auth_data.room] = {
-          agents: {},
-          bufs: {}
-        };
-      }
-      self.room = self.server.rooms[auth_data.room];
-      self.room.agents[self.id] = self;
+      self.room = Room.add_agent(auth_data.room, self);
       self.bufs = self.room.bufs;
-      /* todo: actually auth against something */
       self.authenticated = true;
-      log.debug("client authenticated. yay!");
+      log.debug("client authenticated and joined room", self.room.name);
+      clearTimeout(self.auth_timeout_id);
     } else {
       log.log("bath auth json. disconnecting client");
       self.disconnect();
@@ -133,7 +115,7 @@ AgentConnection.prototype.on_data = function(d){
   }
 };
 
-AgentConnection.prototype.on_request = function(raw){
+AgentConnection.prototype.on_request = function(raw) {
   var self = this;
   var buf;
   var req = JSON.parse(raw);
@@ -145,22 +127,19 @@ AgentConnection.prototype.on_request = function(raw){
   }
 
   buf = self.bufs[req.path];
-  if (buf) {
-    buf.emit(req.path, req);
-  } else {
-    buf = new ColabBuffer(self, req.path, req.patch);
+  if (!buf) {
+    // maybe room should do this
+    buf = new ColabBuffer(self.room, req.path);
     self.bufs[buf.path] = buf;
   }
+  buf.emit("dmp", req.patch, req.checksum);
 };
 
-AgentConnection.prototype.on_dmp = function(json){
+AgentConnection.prototype.on_dmp = function(json) {
+  var self = this;
   var str = JSON.dumps(json) + '\n';
-  var str_len = str.length;
-  var str_str_len = toString(str_len);
-  while (str_str_len.length < LENGTH_PREFIX){
-    str_str_len = '0' + str_str_len;
-  }
-  self.conn.write(str_str_len + str);
+  log.debug("writing", str);
+  self.conn.write(str);
 };
 
 module.exports = AgentConnection;
