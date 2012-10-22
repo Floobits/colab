@@ -6,6 +6,7 @@ var _ = require('underscore');
 
 var ColabBuffer = require('./buffer');
 var createRoom = require('./room').create;
+var log = require('./log');
 
 var SUPPORTED_VERSIONS = ['0.01'];
 
@@ -50,9 +51,9 @@ util.inherits(AgentConnection, events.EventEmitter);
 AgentConnection.prototype.disconnect_unauthed_client = function(){
   var self = this;
   if (self.authenticated === true) {
-    console.log("client authed before timeout");
+    log.debug("client authed before timeout");
   } else {
-    console.log("client took too long to auth. disconnecting");
+    log.log("client took too long to auth. disconnecting");
     self.conn.destroy();
   }
 };
@@ -81,11 +82,11 @@ AgentConnection.prototype.on_data = function(d){
   var msg;
   var auth_data;
 
-  console.log("d: " + d);
+  log.debug("d: " + d);
 
   self.buf += d;
   if (self.buf.indexOf("\n") === -1){
-    console.log("buf has no newline");
+    log.debug("buf has no newline");
     return;
   }
 
@@ -95,7 +96,7 @@ AgentConnection.prototype.on_data = function(d){
 
   if (self.authenticated) {
       _.each(self.room.agents, function (v, k) {
-        console.log("agent" + v.id + " self " + self.id);
+        log.debug("agent" + v.id + " self " + self.id);
         if (v.id === self.id) {
           return;
         }
@@ -112,9 +113,9 @@ AgentConnection.prototype.on_data = function(d){
       self.room = auth_data.room;
       /* todo: actually auth against something */
       self.authenticated = true;
-      console.log("client authenticated. yay!");
+      log.debug("client authenticated. yay!");
     } else {
-      console.log("bath auth json. disconnecting client");
+      log.log("bath auth json. disconnecting client");
       /* TODO: cancel interval for disconnect_unauthed_client */
       self.conn.destroy();
     }
@@ -124,15 +125,15 @@ AgentConnection.prototype.on_data = function(d){
 AgentConnection.prototype.on_request = function(raw){
   var self = this;
   var req, buf;
-  console.log(raw);
+  log.debug(raw);
   req = JSON.parse(raw);
   if (!req.v || !_.has(SUPPORTED_VERSIONS, req.v)){
-    console.log("bad client. goodbye");
+    log.log("bad client. goodbye");
 //    return self.conn.destroy();
   }
 
   if (!req.event.uid){
-    console.log("bad client: no event uid. goodbye");
+    log.log("bad client: no event uid. goodbye");
 //    return self.conn.destroy();
   }
 
