@@ -20,10 +20,11 @@ var AgentConnection = function(id, conn, server){
   self.conn = conn;
   self._bufs = [];
   self.authenticated = false;
-  self.room = undefined;
-  self.user = undefined;
+  self.room = null;
+  self.user = null;
   self.server = server;
   self.auth_timeout = 10000;
+  self.auth_interval = null;
 
   // wire events
   conn.on('end', function(){
@@ -32,7 +33,7 @@ var AgentConnection = function(id, conn, server){
   });
   conn.on('connect', function () {
     self.buf = "";
-    setTimeout(self.disconnect_unauthed_client.bind(self), self.auth_timeout);
+    self.auth_interval = setTimeout(self.disconnect_unauthed_client.bind(self), self.auth_timeout);
   });
   conn.on('data', self.on_data.bind(self));
 
@@ -48,13 +49,19 @@ var AgentConnection = function(id, conn, server){
 
 util.inherits(AgentConnection, events.EventEmitter);
 
+AgentConnection.prototype.disconnect = function() {
+  var self = this;
+  clearTimeout(self.auth_interval);
+  self.conn.destroy();
+};
+
 AgentConnection.prototype.disconnect_unauthed_client = function(){
   var self = this;
   if (self.authenticated === true) {
-    log.debug("client authed before timeout");
+    log.debug("client authed before timeout, but this interval should have been cancelled");
   } else {
     log.log("client took too long to auth. disconnecting");
-    self.conn.destroy();
+    self.disconnect();
   }
 };
 
@@ -98,7 +105,7 @@ AgentConnection.prototype.on_data = function(d){
         _.has(auth_data, "version")) {
       if (!_.contains(SUPPORTED_VERSIONS, auth_data.version)){
         log.log("unsupported client version. disconnecting");
-        self.conn.destroy();
+        self.disconnect();
         return;
       }
 
@@ -120,8 +127,7 @@ AgentConnection.prototype.on_data = function(d){
       log.debug("client authenticated. yay!");
     } else {
       log.log("bath auth json. disconnecting client");
-      /* TODO: cancel interval for disconnect_unauthed_client */
-      self.conn.destroy();
+      self.disconnect();
       return;
     }
   }
@@ -132,19 +138,10 @@ AgentConnection.prototype.on_request = function(raw){
   var buf;
   var req = JSON.parse(raw);
 
-  /*
-  // Interim hack
-  _.each(self.room.agents, function (v, k) {
-    log.debug("agent", v.id, "self", self.id);
-    if (v.id === self.id) {
-      return;
-    }
-    v.conn.write(raw + "\n");
-  });
-*/
+  /* TODO: not all requests will be patches. */
   if (!req.path) {
     log.log("bad client: no path. goodbye");
-    return self.conn.destroy();
+    return self.disconnect();
   }
 
   buf = self.bufs[req.path];

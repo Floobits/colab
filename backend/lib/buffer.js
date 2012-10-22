@@ -18,6 +18,8 @@ var ColabBuffer = function(agent, path, patch){
 util.inherits(ColabBuffer, events.EventEmitter);
 
 ColabBuffer.prototype.on_dmp = function(patch, checksum){
+  var expected_checksum;
+  var hash;
   if (!self._is_valid){
     log.error("buffer is no longer valid because we got out of sync earlier. FROWNY FACE :(");
     return;
@@ -27,12 +29,13 @@ ColabBuffer.prototype.on_dmp = function(patch, checksum){
   }
   // probably should adjust some nobs or something?
   DMP.patch_apply(patch, self._state);
-  var hash = crypto.createHash('md5').update(self._state);
+  hash = crypto.createHash('md5').update(self._state);
 
-  if (hash.digest("hex") !== checksum){
+  expected_checksum = hash.digest("hex");
+  if (expected_checksum !== checksum){
     // TODO- tell client to resend whole damn file
     self._is_valid = false;
-    log.error("checksum doesn't match! we should re-request the file but we don't");
+    log.error("checksum doesn't match! expected", expected_checksum, "but got", checksum, ". we should re-request the file but we don't");
     return;
   }
   self.checksum = checksum;
