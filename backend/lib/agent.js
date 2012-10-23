@@ -117,25 +117,31 @@ AgentConnection.prototype.on_request = function(raw) {
   var self = this;
   var buf;
   var req = JSON.parse(raw);
+  var str;
 
-  /* TODO: not all requests will be patches. */
   if (!req.path) {
     log.log("bad client: no path. goodbye");
     return self.disconnect();
   }
 
-  buf = self.bufs[req.path];
-  if (!buf) {
-    // maybe room should do this
-    buf = new ColabBuffer(self.room, req.path);
-    self.bufs[buf.path] = buf;
+  if (req.action === "patch") {
+    buf = self.bufs[req.path];
+    if (!buf) {
+      // maybe room should do this
+      buf = new ColabBuffer(self.room, req.path);
+      self.bufs[buf.path] = buf;
+    }
+    buf.emit("dmp", req.patch, req.md5);
+  } else if (req.action === "get") {
+    buf = self.bufs[req.path];
+    str = JSON.stringify(buf.to_json());
+    self.conn.write(str + "\n");
   }
-  buf.emit("dmp", req.patch, req.md5);
 };
 
 AgentConnection.prototype.on_dmp = function(json) {
   var self = this;
-  var str = JSON.stringify(json) + '\n';
+  var str = JSON.stringify(json) + "\n";
   log.debug("writing", str);
   self.conn.write(str);
 };

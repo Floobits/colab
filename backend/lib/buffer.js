@@ -23,6 +23,14 @@ var ColabBuffer = function(room, path) {
 
 util.inherits(ColabBuffer, events.EventEmitter);
 
+ColabBuffer.prototype.to_json = function() {
+  var self = this;
+  return {
+    "path": self.path,
+    "buf": self._state
+  };
+};
+
 ColabBuffer.prototype.on_dmp = function(patch_text, md5) {
   var self = this;
   var expected_md5;
