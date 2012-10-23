@@ -132,12 +132,12 @@ AgentConnection.prototype.on_request = function(raw) {
     buf = new ColabBuffer(self.room, req.path);
     self.bufs[buf.path] = buf;
   }
-  buf.emit("dmp", req.patch, req.checksum);
+  buf.emit("dmp", req.patch, req.md5);
 };
 
 AgentConnection.prototype.on_dmp = function(json) {
   var self = this;
-  var str = JSON.dumps(json) + '\n';
+  var str = JSON.stringify(json) + '\n';
   log.debug("writing", str);
   self.conn.write(str);
 };

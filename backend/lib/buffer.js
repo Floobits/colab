@@ -15,7 +15,7 @@ var ColabBuffer = function(room, path) {
   self.path = path;
   self.room = room;
   self._state = "";
-  self._checksum = null;
+  self._md5 = null;
   self._is_valid = true;
   log.debug("created new buffer", self.guid);
   self.on('dmp', self.on_dmp.bind(self));
@@ -23,38 +23,40 @@ var ColabBuffer = function(room, path) {
 
 util.inherits(ColabBuffer, events.EventEmitter);
 
-ColabBuffer.prototype.on_dmp = function(patch, checksum) {
+ColabBuffer.prototype.on_dmp = function(patch_text, md5) {
   var self = this;
-  var expected_checksum;
+  var expected_md5;
   var hash;
+  var patch;
   if (!self._is_valid) {
     log.error("buffer is no longer valid because we got out of sync earlier. FROWNY FACE :(");
     return;
   }
-  if (checksum === self._checksum) {
-    log.debug("checksum is the same as previous", checksum, "not doing anything");
+  if (md5 === self._md5) {
+    log.debug("md5 is the same as previous", md5, "not doing anything");
     return;
   }
+  log.debug("parsing patch text", patch_text);
+  patch = DMP.patch_fromText(patch_text);
   log.debug("applying patch", patch, "to buf");
-  // probably should adjust some nobs or something?
-  debugger;
   DMP.patch_apply(patch, self._state);
-  hash = crypto.createHash('md5').update(self._state);
+  hash = crypto.createHash("md5").update(self._state);
 
-  expected_checksum = hash.digest("hex");
-  if (expected_checksum !== checksum) {
+  expected_md5 = hash.digest("hex");
+  log.debug("state is now", self._state);
+  if (expected_md5 !== md5) {
     // TODO- tell client to resend whole damn file
     self._is_valid = false;
-    log.error("checksum doesn't match! expected", expected_checksum, "but got", checksum, ". we should re-request the file but we don't");
+    log.error("md5 doesn't match! expected", expected_md5, "but got", md5, ". we should re-request the file but we don't");
     return;
   }
-  self.checksum = checksum;
+  self.md5 = md5;
 
   self.room.emit('dmp', {
-    checksum: self.checksum,
+    md5: self.md5,
     guid: self.guid,
     path: self.path,
-    patch: patch
+    patch: DMP.patch_toText(patch)
   });
 };
 
