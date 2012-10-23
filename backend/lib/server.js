@@ -34,6 +34,10 @@ ColabServer.prototype.on_conn = function(conn) {
 
 ColabServer.prototype.on_conn_end = function(agent) {
   var self = this;
+  if (agent.room) {
+    agent.room.removeListener('dmp', agent.dmp_listener);
+    delete agent.room.agents[agent.id];
+  }
   delete self.agents[agent.id];
   log.debug('client disconnected');
 };

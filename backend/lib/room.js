@@ -25,7 +25,7 @@ exports.add_agent = function(name, agent) {
 
   room.agents[agent.id] = agent;
   agent.bufs = room.bufs;
-  room.on('dmp', agent.on_dmp.bind(agent));
+  room.on('dmp', agent.dmp_listener);
 
   return room;
 };

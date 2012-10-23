@@ -26,6 +26,7 @@ var AgentConnection = function(id, conn, server) {
   self.authenticated = false;
   self.auth_timeout = 10000;
   self.auth_timeout_id = null;
+  self.dmp_listener = self.on_dmp.bind(self);
 
   conn.on('end', function() {
     // do we need to remove the room listener?
@@ -53,9 +54,6 @@ AgentConnection.prototype.disconnect = function() {
   var self = this;
   clearTimeout(self.auth_timeout_id);
   self.conn.destroy();
-  // TODO: this is sloppy. rooms & servers might want to do something
-  delete self.rooms.agents[self.id];
-  delete self.server.agents[self.id];
 };
 
 AgentConnection.prototype.disconnect_unauthed_client = function() {
@@ -108,7 +106,7 @@ AgentConnection.prototype.on_data = function(d) {
       log.debug("client authenticated and joined room", self.room.name);
       clearTimeout(self.auth_timeout_id);
     } else {
-      log.log("bath auth json. disconnecting client");
+      log.log("bad auth json. disconnecting client");
       self.disconnect();
       return;
     }
