@@ -136,8 +136,7 @@ AgentConnection.prototype.on_request = function(raw) {
     buf = self.bufs[req.path];
     buf_json = buf.to_json();
     buf_json.action = "get_buf";
-    str = JSON.stringify(buf_json);
-    self.conn.write(str + "\n");
+    self.write(json);
   }
 };
 
@@ -145,9 +144,14 @@ AgentConnection.prototype.on_dmp = function(json) {
   var self = this;
   var str;
   json.action = "patch";
-  str = JSON.stringify(json) + "\n";
+  self.write(json);
+};
+
+AgentConnection.prototype.write = function(json) {
+  var self = this;
+  var str = JSON.stringify(json);
   log.debug("writing", str);
-  self.conn.write(str);
+  self.conn.write(str + "\n");
 };
 
 module.exports = AgentConnection;
