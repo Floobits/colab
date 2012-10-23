@@ -132,16 +132,20 @@ AgentConnection.prototype.on_request = function(raw) {
       self.bufs[buf.path] = buf;
     }
     buf.emit("dmp", req.patch, req.md5);
-  } else if (req.action === "get") {
+  } else if (req.action === "get_buf") {
     buf = self.bufs[req.path];
-    str = JSON.stringify(buf.to_json());
+    buf_json = buf.to_json();
+    buf_json.action = "get_buf";
+    str = JSON.stringify(buf_json);
     self.conn.write(str + "\n");
   }
 };
 
 AgentConnection.prototype.on_dmp = function(json) {
   var self = this;
-  var str = JSON.stringify(json) + "\n";
+  var str;
+  json.action = "patch";
+  str = JSON.stringify(json) + "\n";
   log.debug("writing", str);
   self.conn.write(str);
 };
