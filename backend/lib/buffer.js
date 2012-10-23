@@ -27,7 +27,8 @@ ColabBuffer.prototype.on_dmp = function(patch_text, md5) {
   var self = this;
   var expected_md5;
   var hash;
-  var patch;
+  var patches;
+  var result;
   if (!self._is_valid) {
     log.error("buffer is no longer valid because we got out of sync earlier. FROWNY FACE :(");
     return;
@@ -37,9 +38,15 @@ ColabBuffer.prototype.on_dmp = function(patch_text, md5) {
     return;
   }
   log.debug("parsing patch text", patch_text);
-  patch = DMP.patch_fromText(patch_text);
-  log.debug("applying patch", patch, "to buf");
-  DMP.patch_apply(patch, self._state);
+  patches = DMP.patch_fromText(patch_text);
+  log.debug("applying patch", patches, "to buf");
+  result = DMP.patch_apply(patches, self._state);
+  if (result[1][0] === true) {
+    self._state = result[0];
+  } else {
+    log.error("Patch wasn't applied!", result);
+    return;
+  }
   hash = crypto.createHash("md5").update(self._state);
 
   expected_md5 = hash.digest("hex");
@@ -56,7 +63,7 @@ ColabBuffer.prototype.on_dmp = function(patch_text, md5) {
     md5: self.md5,
     guid: self.guid,
     path: self.path,
-    patch: DMP.patch_toText(patch)
+    patch: DMP.patch_toText(patches)
   });
 };
 
