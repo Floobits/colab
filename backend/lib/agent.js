@@ -74,17 +74,6 @@ BaseAgentConnection.prototype.auth = function (auth_data) {
   }
 };
 
-BaseAgentConnection.prototype.on_dmp = function (source_client, json) {
-  var self = this;
-  var str;
-  json.name = "patch";
-  if (source_client.id === self.id) {
-    log.debug("not sending to source client", self.id);
-  } else {
-    self.write(json);
-  }
-};
-
 BaseAgentConnection.prototype.on_patch = function (req) {
   var self = this;
   var buf = self.bufs[req.path];
@@ -167,6 +156,17 @@ AgentConnection.prototype.on_data = function (d) {
   }
 };
 
+AgentConnection.prototype.on_dmp = function (source_client, json) {
+  var self = this;
+  var str;
+  json.name = "patch";
+  if (source_client.id === self.id) {
+    log.debug("not sending to source client", self.id);
+  } else {
+    self.write(json);
+  }
+};
+
 AgentConnection.prototype.write = function (json) {
   var self = this;
   var str = JSON.stringify(json);
@@ -191,6 +191,17 @@ var SIOAgentConnection = function (id, conn, server) {
 };
 
 util.inherits(SIOAgentConnection, BaseAgentConnection);
+
+SIOAgentConnection.prototype.on_dmp = function (source_client, json) {
+  var self = this;
+  var str;
+  if (source_client.id === self.id) {
+    log.debug("not sending to source client", self.id);
+  } else {
+    self.conn.emit('patch', json);
+  }
+};
+
 
 
 module.exports = {
