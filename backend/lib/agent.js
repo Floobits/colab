@@ -179,7 +179,12 @@ AgentConnection.prototype.write = function (json) {
   var self = this;
   var str = JSON.stringify(json);
   log.debug("writing", str);
-  self.conn.write(str + "\n");
+  try {
+    self.conn.write(str + "\n");
+  } catch (e) {
+    log.error("error writing to client:", e, "disconnecting");
+    self.disconnect();
+  }
 };
 
 

@@ -46,8 +46,12 @@ ColabBuffer.prototype.on_dmp = function (client, patch_text, md5) {
     log.debug("md5 is the same as previous", md5, "not doing anything");
     return;
   }
-  log.debug("parsing patch text", patch_text);
+  log.debug("parsing patch text\"", patch_text, "\"");
   patches = DMP.patch_fromText(patch_text);
+  if (patches.length === 0) {
+    log.debug("patch is empty");
+    return;
+  }
   log.debug("applying patch", patches, "to buf");
   result = DMP.patch_apply(patches, self._state);
   if (result[1][0] === true) {
