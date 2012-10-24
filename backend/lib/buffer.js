@@ -38,8 +38,9 @@ ColabBuffer.prototype.on_dmp = function (client, patch_text, md5) {
   var patches;
   var result;
   if (!self._is_valid) {
+    // TODO: the server should always have the authoritative copy
     log.error("buffer is no longer valid because we got out of sync earlier. FROWNY FACE :(");
-    return;
+    //return;
   }
   if (md5 === self._md5) {
     log.debug("md5 is the same as previous", md5, "not doing anything");
@@ -59,11 +60,13 @@ ColabBuffer.prototype.on_dmp = function (client, patch_text, md5) {
 
   expected_md5 = hash.digest("hex");
   log.debug("state is now", self._state);
-  if (expected_md5 !== md5) {
+  if (expected_md5 === md5) {
+    self._is_valid = true;
+  } else {
     // TODO- tell client to resend whole damn file
     self._is_valid = false;
     log.error("md5 doesn't match! expected", expected_md5, "but got", md5, ". we should re-request the file but we don't");
-    return;
+//    return;
   }
   self.md5 = md5;
 
