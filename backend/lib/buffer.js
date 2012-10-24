@@ -8,7 +8,7 @@ var _ = require('underscore');
 
 var log = require('./log');
 
-var ColabBuffer = function(room, path) {
+var ColabBuffer = function (room, path) {
   var self = this;
   // TODO: this guid could have conflicts
   self.guid = util.format("%s-%s", room.name, path);
@@ -23,7 +23,7 @@ var ColabBuffer = function(room, path) {
 
 util.inherits(ColabBuffer, events.EventEmitter);
 
-ColabBuffer.prototype.to_json = function() {
+ColabBuffer.prototype.to_json = function () {
   var self = this;
   return {
     "path": self.path,
@@ -31,7 +31,7 @@ ColabBuffer.prototype.to_json = function() {
   };
 };
 
-ColabBuffer.prototype.on_dmp = function(patch_text, md5) {
+ColabBuffer.prototype.on_dmp = function (client, patch_text, md5) {
   var self = this;
   var expected_md5;
   var hash;
@@ -67,7 +67,7 @@ ColabBuffer.prototype.on_dmp = function(patch_text, md5) {
   }
   self.md5 = md5;
 
-  self.room.emit('dmp', {
+  self.room.emit('dmp', client, {
     md5: self.md5,
     guid: self.guid,
     path: self.path,

@@ -11,7 +11,7 @@ var log = require('./log');
 var SUPPORTED_VERSIONS = ['0.01'];
 
 
-var AgentConnection = function(id, conn, server) {
+var AgentConnection = function (id, conn, server) {
   var self = this;
 
   events.EventEmitter.call(self);
@@ -28,7 +28,7 @@ var AgentConnection = function(id, conn, server) {
   self.auth_timeout_id = null;
   self.dmp_listener = self.on_dmp.bind(self);
 
-  conn.on('end', function() {
+  conn.on('end', function () {
     // do we need to remove the room listener?
     self.emit('on_conn_end', self);
   });
@@ -39,7 +39,7 @@ var AgentConnection = function(id, conn, server) {
   conn.on('data', self.on_data.bind(self));
 
   self.on('request', self.on_request.bind(self));
-  self.on('dmp', function() {
+  self.on('dmp', function () {
     if (!self._room) {
       log.error("dmp emitted but agent isn't in a room!");
       return;
@@ -50,13 +50,13 @@ var AgentConnection = function(id, conn, server) {
 
 util.inherits(AgentConnection, events.EventEmitter);
 
-AgentConnection.prototype.disconnect = function() {
+AgentConnection.prototype.disconnect = function () {
   var self = this;
   clearTimeout(self.auth_timeout_id);
   self.conn.destroy();
 };
 
-AgentConnection.prototype.disconnect_unauthed_client = function() {
+AgentConnection.prototype.disconnect_unauthed_client = function () {
   var self = this;
   if (self.authenticated === true) {
     log.debug("client authed before timeout, but this interval should have been cancelled");
@@ -66,7 +66,7 @@ AgentConnection.prototype.disconnect_unauthed_client = function() {
   }
 };
 
-AgentConnection.prototype.on_data = function(d) {
+AgentConnection.prototype.on_data = function (d) {
   var self = this;
   var msg;
   var auth_data;
@@ -113,7 +113,7 @@ AgentConnection.prototype.on_data = function(d) {
   }
 };
 
-AgentConnection.prototype.on_request = function(raw) {
+AgentConnection.prototype.on_request = function (raw) {
   var self = this;
   var buf;
   var req = JSON.parse(raw);
@@ -131,7 +131,7 @@ AgentConnection.prototype.on_request = function(raw) {
       buf = new ColabBuffer(self.room, req.path);
       self.bufs[buf.path] = buf;
     }
-    buf.emit("dmp", req.patch, req.md5);
+    buf.emit("dmp", self, req.patch, req.md5);
   } else if (req.action === "get_buf") {
     buf = self.bufs[req.path];
     buf_json = buf.to_json();
@@ -140,14 +140,18 @@ AgentConnection.prototype.on_request = function(raw) {
   }
 };
 
-AgentConnection.prototype.on_dmp = function(json) {
+AgentConnection.prototype.on_dmp = function (source_client, json) {
   var self = this;
   var str;
   json.action = "patch";
-  self.write(json);
+  if (source_client.id === self.id) {
+    log.debug("not sending to source client", self.id);
+  } else {
+    self.write(json);
+  }
 };
 
-AgentConnection.prototype.write = function(json) {
+AgentConnection.prototype.write = function (json) {
   var self = this;
   var str = JSON.stringify(json);
   log.debug("writing", str);

@@ -3,7 +3,7 @@ var events = require('events');
 
 var _ = require('underscore');
 
-var Room = function(name, agent) {
+var Room = function (name, agent) {
   var self = this;
   self.name = name;
   self.owner = agent.username;
@@ -15,7 +15,7 @@ var Room = function(name, agent) {
 
 util.inherits(Room, events.EventEmitter);
 
-exports.add_agent = function(name, agent) {
+exports.add_agent = function (name, agent) {
   var room = agent.server.rooms[name];
 
   if (room === undefined) {
