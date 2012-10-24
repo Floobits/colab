@@ -1,2 +1,3 @@
 exports.json_port = 3148;
 exports.socket_io_port = 8048;
+exports.socket_io_transports = ["websocket", "xhr-polling", "jsonp-polling"];
