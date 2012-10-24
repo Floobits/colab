@@ -74,20 +74,28 @@ BaseAgentConnection.prototype.auth = function (auth_data) {
   }
 };
 
+BaseAgentConnection.prototype.get_buf = function (path) {
+  var self = this;
+  var buf = self.bufs[path];
+  if (buf === undefined) {
+    log.debug("buf for path", path, "doesn't exist");
+    log.debug("bufs:", self.bufs);
+    // maybe room should do this
+    buf = new ColabBuffer(self.room, path);
+    self.bufs[path] = buf;
+  }
+  return buf;
+}
+
 BaseAgentConnection.prototype.on_patch = function (req) {
   var self = this;
-  var buf = self.bufs[req.path];
-  if (!buf) {
-    // maybe room should do this
-    buf = new ColabBuffer(self.room, req.path);
-    self.bufs[buf.path] = buf;
-  }
+  var buf = self.get_buf(req.path);
   buf.emit("dmp", self, req.patch, req.md5);
 };
 
 BaseAgentConnection.prototype.on_get_buf = function (req) {
   var self = this;
-  var buf = self.bufs[req.path];
+  var buf = self.get_buf(req.path);
   buf_json = buf.to_json();
   buf_json.name = "get_buf";
   self.write(json);
@@ -182,11 +190,12 @@ var SIOAgentConnection = function (id, conn, server) {
 
   conn.on('auth', self.auth.bind(self));
   conn.on('patch', self.on_patch.bind(self));
-  conn.on('get_buf', function (path) {
-    var buf = self.bufs[path];
-    buf_json = buf.to_json();
+  conn.on('get_buf', function (req) {
+    var path = req.path;
+    var buf = self.get_buf(req.path);
+    var buf_json = buf.to_json();
     buf_json.name = "get_buf";
-    conn.emit("get_buf", buf);
+    conn.emit("get_buf", buf_json);
   });
 };
 
