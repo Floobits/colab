@@ -11,7 +11,7 @@ var log = require('./log');
 var SUPPORTED_VERSIONS = ['0.01'];
 
 
-var AgentConnection = function (id, conn, server) {
+var BaseAgentConnection = function (id, conn, server) {
   var self = this;
 
   events.EventEmitter.call(self);
@@ -28,17 +28,12 @@ var AgentConnection = function (id, conn, server) {
   self.auth_timeout_id = null;
   self.dmp_listener = self.on_dmp.bind(self);
 
+  self.allowed_actions = ["patch", "get_buf"];
+
   conn.on('end', function () {
     // do we need to remove the room listener?
     self.emit('on_conn_end', self);
   });
-  conn.on('connect', function () {
-    self.buf = "";
-    self.auth_timeout_id = setTimeout(self.disconnect_unauthed_client.bind(self), self.auth_timeout);
-  });
-  conn.on('data', self.on_data.bind(self));
-
-  self.on('request', self.on_request.bind(self));
   self.on('dmp', function () {
     if (!self._room) {
       log.error("dmp emitted but agent isn't in a room!");
@@ -46,9 +41,84 @@ var AgentConnection = function (id, conn, server) {
     }
     self._room.emit.call(arguments);
   });
+  self.on('patch', self.on_patch.bind(self));
+  self.on('get_buf', self.on_get_buf.bind(self));
 };
 
-util.inherits(AgentConnection, events.EventEmitter);
+util.inherits(BaseAgentConnection, events.EventEmitter);
+
+BaseAgentConnection.prototype.auth = function (auth_data) {
+  var self = this;
+  if (_.has(auth_data, "username") &&
+      _.has(auth_data, "secret") &&
+      _.has(auth_data, "room") &&
+      _.has(auth_data, "version")) {
+    if (!_.contains(SUPPORTED_VERSIONS, auth_data.version)) {
+      log.log("unsupported client version. disconnecting");
+      self.disconnect();
+      return;
+    }
+
+    /* TODO: actually auth against something */
+    self.username = auth_data.username;
+    self.secret = auth_data.secret;
+    self.room = Room.add_agent(auth_data.room, self);
+    self.bufs = self.room.bufs;
+    self.authenticated = true;
+    log.debug("client authenticated and joined room", self.room.name);
+    clearTimeout(self.auth_timeout_id);
+  } else {
+    log.log("bad auth json. disconnecting client");
+    self.disconnect();
+    return;
+  }
+};
+
+BaseAgentConnection.prototype.on_dmp = function (source_client, json) {
+  var self = this;
+  var str;
+  json.name = "patch";
+  if (source_client.id === self.id) {
+    log.debug("not sending to source client", self.id);
+  } else {
+    self.write(json);
+  }
+};
+
+BaseAgentConnection.prototype.on_patch = function (req) {
+  var self = this;
+  var buf = self.bufs[req.path];
+  if (!buf) {
+    // maybe room should do this
+    buf = new ColabBuffer(self.room, req.path);
+    self.bufs[buf.path] = buf;
+  }
+  buf.emit("dmp", self, req.patch, req.md5);
+};
+
+BaseAgentConnection.prototype.on_get_buf = function (req) {
+  var self = this;
+  var buf = self.bufs[req.path];
+  buf_json = buf.to_json();
+  buf_json.name = "get_buf";
+  self.write(json);
+};
+
+
+var AgentConnection = function (id, conn, server) {
+  var self = this;
+
+  BaseAgentConnection.call(self, id, conn, server);
+
+  conn.on('connect', function () {
+    log.debug("TCP connection");
+    self.buf = "";
+    self.auth_timeout_id = setTimeout(self.disconnect_unauthed_client.bind(self), self.auth_timeout);
+  });
+  conn.on('data', self.on_data.bind(self));
+};
+
+util.inherits(AgentConnection, BaseAgentConnection);
 
 AgentConnection.prototype.disconnect = function () {
   var self = this;
@@ -83,71 +153,17 @@ AgentConnection.prototype.on_data = function (d) {
   self.buf = msg[1];
   msg = msg[0];
 
+  msg = JSON.parse(msg);
   if (self.authenticated) {
-    self.emit('request', msg);
-  } else {
-    auth_data = JSON.parse(msg);
-    if (_.has(auth_data, "username") &&
-        _.has(auth_data, "secret") &&
-        _.has(auth_data, "room") &&
-        _.has(auth_data, "version")) {
-      if (!_.contains(SUPPORTED_VERSIONS, auth_data.version)) {
-        log.log("unsupported client version. disconnecting");
-        self.disconnect();
-        return;
-      }
-
-      /* TODO: actually auth against something */
-      self.username = auth_data.username;
-      self.secret = auth_data.secret;
-      self.room = Room.add_agent(auth_data.room, self);
-      self.bufs = self.room.bufs;
-      self.authenticated = true;
-      log.debug("client authenticated and joined room", self.room.name);
-      clearTimeout(self.auth_timeout_id);
+    // TODO: make sure req.name is in a whitelist of allowed names
+    if (_.contains(self.allowed_actions, msg.name)) {
+      self.emit(msg.name, msg);
     } else {
-      log.log("bad auth json. disconnecting client");
+      log.error("action", msg.name, "not allowed");
       self.disconnect();
-      return;
     }
-  }
-};
-
-AgentConnection.prototype.on_request = function (raw) {
-  var self = this;
-  var buf;
-  var req = JSON.parse(raw);
-  var str;
-
-  if (!req.path) {
-    log.log("bad client: no path. goodbye");
-    return self.disconnect();
-  }
-
-  if (req.action === "patch") {
-    buf = self.bufs[req.path];
-    if (!buf) {
-      // maybe room should do this
-      buf = new ColabBuffer(self.room, req.path);
-      self.bufs[buf.path] = buf;
-    }
-    buf.emit("dmp", self, req.patch, req.md5);
-  } else if (req.action === "get_buf") {
-    buf = self.bufs[req.path];
-    buf_json = buf.to_json();
-    buf_json.action = "get_buf";
-    self.write(json);
-  }
-};
-
-AgentConnection.prototype.on_dmp = function (source_client, json) {
-  var self = this;
-  var str;
-  json.action = "patch";
-  if (source_client.id === self.id) {
-    log.debug("not sending to source client", self.id);
   } else {
-    self.write(json);
+    self.auth(msg);
   }
 };
 
@@ -158,4 +174,26 @@ AgentConnection.prototype.write = function (json) {
   self.conn.write(str + "\n");
 };
 
-module.exports = AgentConnection;
+
+var SIOAgentConnection = function (id, conn, server) {
+  var self = this;
+
+  BaseAgentConnection.call(self, id, conn, server);
+
+  conn.on('auth', self.auth.bind(self));
+  conn.on('patch', self.on_patch.bind(self));
+  conn.on('get_buf', function (path) {
+    var buf = self.bufs[path];
+    buf_json = buf.to_json();
+    buf_json.name = "get_buf";
+    conn.emit("get_buf", buf);
+  });
+};
+
+util.inherits(SIOAgentConnection, BaseAgentConnection);
+
+
+module.exports = {
+  "AgentConnection": AgentConnection,
+  "SIOAgentConnection": SIOAgentConnection
+};

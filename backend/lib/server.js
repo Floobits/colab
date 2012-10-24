@@ -7,7 +7,9 @@ var settings = require('./settings');
 var _ = require('underscore');
 var io = require('socket.io').listen(settings.socket_io_port);
 
-var AgentConnection = require('./agent');
+var agent = require('./agent');
+var AgentConnection = agent.AgentConnection;
+var SIOAgentConnection = agent.SIOAgentConnection;
 var log = require('./log');
 
 
@@ -27,7 +29,7 @@ ColabServer.prototype.listen = function (port, address) {
   log.log('Listening on port ' + port);
 
   io.configure(function () {
-    io.set('transports', ['websocket', 'xhr-polling', 'jsonp-polling']);
+    io.set('transports', settings.socket_io_transports);
     io.enable('log');
   });
   io.sockets.on('connection', self.on_sio_conn.bind(self));
@@ -56,10 +58,14 @@ ColabServer.prototype.on_sio_conn = function (socket) {
   var self = this;
   var number = ++self.conn_number;
   var agent = new SIOAgentConnection(number, socket, self);
-  socket.emit('news', { hello: 'world' });
-  socket.on('patch', function (data) {
+  self.agents[number] = agent;
+  log.debug('socket io client', number, 'connected');
+  agent.once('on_conn_end', self.on_conn_end.bind(self));
+
+//  socket.emit('news', { hello: 'world' });
+/*  socket.on('patch', function (data) {
     console.log(data);
-  });
+  });*/
 };
 
 exports.run = function () {
