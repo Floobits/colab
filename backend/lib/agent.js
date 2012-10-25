@@ -85,7 +85,7 @@ BaseAgentConnection.prototype.get_buf = function (path) {
     self.bufs[path] = buf;
   }
   return buf;
-}
+};
 
 BaseAgentConnection.prototype.on_patch = function (req) {
   var self = this;
@@ -98,7 +98,7 @@ BaseAgentConnection.prototype.on_get_buf = function (req) {
   var buf = self.get_buf(req.path);
   buf_json = buf.to_json();
   buf_json.name = "get_buf";
-  self.write(json);
+  self.write(buf_json);
 };
 
 
@@ -117,9 +117,12 @@ var AgentConnection = function (id, conn, server) {
 
 util.inherits(AgentConnection, BaseAgentConnection);
 
-AgentConnection.prototype.disconnect = function () {
+BaseAgentConnection.prototype.disconnect = function () {
   var self = this;
-  clearTimeout(self.auth_timeout_id);
+  if (self.auth_timeout_id) {
+    clearTimeout(self.auth_timeout_id);
+  }
+  log.debug("disconnecting client", self.id, "ip", self.conn.remoteAddress);
   self.conn.destroy();
 };
 
@@ -150,7 +153,12 @@ AgentConnection.prototype.on_data = function (d) {
   self.buf = msg[1];
   msg = msg[0];
 
-  msg = JSON.parse(msg);
+  try {
+    msg = JSON.parse(msg);
+  } catch (e) {
+    log.error("couldn't parse json:", e);
+    self.disconnect();
+  }
   if (self.authenticated) {
     // TODO: make sure req.name is in a whitelist of allowed names
     if (_.contains(self.allowed_actions, msg.name)) {
@@ -215,8 +223,6 @@ SIOAgentConnection.prototype.on_dmp = function (source_client, json) {
     self.conn.emit('patch', json);
   }
 };
-
-
 
 module.exports = {
   "AgentConnection": AgentConnection,
