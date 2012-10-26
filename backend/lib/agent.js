@@ -74,7 +74,7 @@ BaseAgentConnection.prototype.auth = function (auth_data) {
     self.authenticated = true;
     log.debug("client authenticated and joined room", self.room.name);
     clearTimeout(self.auth_timeout_id);
-    self.send_buf_paths(self.room.buf_paths());
+    self.send_room_info(self.room.to_json());
   } else {
     log.log("bad auth json. disconnecting client");
     self.disconnect();
@@ -168,12 +168,10 @@ AgentConnection.prototype.on_dmp = function (source_client, json) {
   }
 };
 
-AgentConnection.prototype.send_buf_paths = function (buf_paths) {
+AgentConnection.prototype.send_room_info = function (ri) {
   var self = this;
-  self.write({
-    "name": "buf_paths",
-    "buf_paths": buf_paths
-  });
+  ri.name = "room_info";
+  self.write(ri);
 };
 
 AgentConnection.prototype.write = function (json) {
@@ -217,9 +215,9 @@ SIOAgentConnection.prototype.on_dmp = function (source_client, json) {
   }
 };
 
-SIOAgentConnection.prototype.send_buf_paths = function (buf_paths) {
+SIOAgentConnection.prototype.send_room_info = function (ri) {
   var self = this;
-  self.conn.emit("buf_paths", buf_paths);
+  self.conn.emit("room_info", ri);
 };
 
 module.exports = {

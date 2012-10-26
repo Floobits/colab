@@ -31,6 +31,19 @@ Room.prototype.get_buf = function (path) {
   return buf;
 };
 
+Room.prototype.to_json = function () {
+  var self = this;
+  var room_info = {
+    "buf_paths": self.buf_paths(),
+    "owner": self.owner,
+    "users": []
+  };
+  _.each(self.agents, function (agent, id) {
+    room_info.users.push(agent.username);
+  });
+  return room_info;
+};
+
 Room.prototype.buf_paths = function () {
   var self = this;
   var buf_paths = {};
