@@ -8,6 +8,7 @@ var _ = require('underscore');
 
 var log = require('./log');
 
+
 var ColabBuffer = function (room, path) {
   var self = this;
   // TODO: this guid could have conflicts

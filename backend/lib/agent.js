@@ -1,10 +1,8 @@
-
-var util = require('util');
 var events = require('events');
+var util = require('util');
 
 var _ = require('underscore');
 
-var ColabBuffer = require('./buffer');
 var Room = require('./room');
 var log = require('./log');
 
@@ -31,7 +29,7 @@ var BaseAgentConnection = function (id, conn, server) {
   self.allowed_actions = ["patch", "get_buf"];
 
   conn.on('end', function () {
-    // do we need to remove the room listener?
+    // server removes the listener
     self.emit('on_conn_end', self);
   });
   self.on('dmp', function () {
@@ -46,6 +44,15 @@ var BaseAgentConnection = function (id, conn, server) {
 };
 
 util.inherits(BaseAgentConnection, events.EventEmitter);
+
+BaseAgentConnection.prototype.disconnect = function () {
+  var self = this;
+  if (self.auth_timeout_id) {
+    clearTimeout(self.auth_timeout_id);
+  }
+  log.debug("disconnecting client", self.id, "ip", self.conn.remoteAddress);
+  self.conn.destroy();
+};
 
 BaseAgentConnection.prototype.auth = function (auth_data) {
   var self = this;
@@ -67,6 +74,7 @@ BaseAgentConnection.prototype.auth = function (auth_data) {
     self.authenticated = true;
     log.debug("client authenticated and joined room", self.room.name);
     clearTimeout(self.auth_timeout_id);
+    self.send_buf_paths(self.room.buf_paths());
   } else {
     log.log("bad auth json. disconnecting client");
     self.disconnect();
@@ -74,29 +82,16 @@ BaseAgentConnection.prototype.auth = function (auth_data) {
   }
 };
 
-BaseAgentConnection.prototype.get_buf = function (path) {
-  var self = this;
-  var buf = self.bufs[path];
-  if (buf === undefined) {
-    log.debug("buf for path", path, "doesn't exist");
-    log.debug("bufs:", self.bufs);
-    // maybe room should do this
-    buf = new ColabBuffer(self.room, path);
-    self.bufs[path] = buf;
-  }
-  return buf;
-};
-
 BaseAgentConnection.prototype.on_patch = function (req) {
   var self = this;
-  var buf = self.get_buf(req.path);
+  var buf = self.room.get_buf(req.path);
   buf.emit("dmp", self, req.patch, req.md5);
 };
 
 BaseAgentConnection.prototype.on_get_buf = function (req) {
   var self = this;
-  var buf = self.get_buf(req.path);
-  buf_json = buf.to_json();
+  var buf = self.room.get_buf(req.path);
+  var buf_json = buf.to_json();
   buf_json.name = "get_buf";
   self.write(buf_json);
 };
@@ -116,15 +111,6 @@ var AgentConnection = function (id, conn, server) {
 };
 
 util.inherits(AgentConnection, BaseAgentConnection);
-
-BaseAgentConnection.prototype.disconnect = function () {
-  var self = this;
-  if (self.auth_timeout_id) {
-    clearTimeout(self.auth_timeout_id);
-  }
-  log.debug("disconnecting client", self.id, "ip", self.conn.remoteAddress);
-  self.conn.destroy();
-};
 
 AgentConnection.prototype.disconnect_unauthed_client = function () {
   var self = this;
@@ -160,7 +146,6 @@ AgentConnection.prototype.on_data = function (d) {
     self.disconnect();
   }
   if (self.authenticated) {
-    // TODO: make sure req.name is in a whitelist of allowed names
     if (_.contains(self.allowed_actions, msg.name)) {
       self.emit(msg.name, msg);
     } else {
@@ -181,6 +166,14 @@ AgentConnection.prototype.on_dmp = function (source_client, json) {
   } else {
     self.write(json);
   }
+};
+
+AgentConnection.prototype.send_buf_paths = function (buf_paths) {
+  var self = this;
+  self.write({
+    "name": "buf_paths",
+    "buf_paths": buf_paths
+  });
 };
 
 AgentConnection.prototype.write = function (json) {
@@ -205,7 +198,7 @@ var SIOAgentConnection = function (id, conn, server) {
   conn.on('patch', self.on_patch.bind(self));
   conn.on('get_buf', function (req) {
     var path = req.path;
-    var buf = self.get_buf(req.path);
+    var buf = self.room.get_buf(req.path);
     var buf_json = buf.to_json();
     buf_json.name = "get_buf";
     conn.emit("get_buf", buf_json);
@@ -220,8 +213,13 @@ SIOAgentConnection.prototype.on_dmp = function (source_client, json) {
   if (source_client.id === self.id) {
     log.debug("not sending to source client", self.id);
   } else {
-    self.conn.emit('patch', json);
+    self.conn.emit("patch", json);
   }
+};
+
+SIOAgentConnection.prototype.send_buf_paths = function (buf_paths) {
+  var self = this;
+  self.conn.emit("buf_paths", buf_paths);
 };
 
 module.exports = {
