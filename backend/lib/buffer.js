@@ -9,10 +9,11 @@ var _ = require('underscore');
 var log = require('./log');
 
 
-var ColabBuffer = function (room, path) {
+var ColabBuffer = function (room, path, fid) {
   var self = this;
   // TODO: this guid could have conflicts
   self.guid = util.format("%s-%s", room.name, path);
+  self.fid = fid;
   self.path = path;
   self.room = room;
   self._state = "";

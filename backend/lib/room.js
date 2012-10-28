@@ -13,6 +13,7 @@ var Room = function (name, agent) {
   self.owner = agent.username;
   self.agents = {};
   self.bufs = {};
+  self.cur_fid = 0;
 
   events.EventEmitter.call(self);
 };
@@ -25,7 +26,7 @@ Room.prototype.get_buf = function (path) {
   if (buf === undefined) {
     log.debug("buf for path", path, "doesn't exist. creating...");
     log.debug("bufs:", self.bufs);
-    buf = new ColabBuffer(self, path);
+    buf = new ColabBuffer(self, path, ++self.cur_fid);
     self.bufs[path] = buf;
   }
   return buf;
