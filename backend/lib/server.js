@@ -61,11 +61,6 @@ ColabServer.prototype.on_sio_conn = function (socket) {
   self.agents[number] = agent;
   log.debug('socket io client', number, 'connected');
   agent.once('on_conn_end', self.on_conn_end.bind(self));
-
-//  socket.emit('news', { hello: 'world' });
-/*  socket.on('patch', function (data) {
-    console.log(data);
-  });*/
 };
 
 exports.run = function () {
