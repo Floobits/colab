@@ -29,7 +29,8 @@ ColabBuffer.prototype.to_json = function () {
   return {
     "path": self.path,
     "buf": self._state,
-    "id": self.id
+    "id": self.id,
+    "md5": self._md5
   };
 };
 

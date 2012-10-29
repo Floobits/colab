@@ -27,23 +27,24 @@ Room.prototype.get_buf = function (id) {
   return self.bufs[id];
 };
 
-Room.prototype.create_buf = function (path){
+Room.prototype.create_buf = function (path) {
   var self = this;
   log.debug("creating buf for path", path);
 
   var sub_tree = self.tree;
   var chunks = path.split("/");
   var chunk;
+  var i;
 
   // GOOD INTERVIEW QUESTION
-  for(var i=0; i<chunks.length; i++){
+  for (i = 0; i < chunks.length; i++) {
     chunk = chunks[i];
-    if (i == chunks.length-1 && sub_tree[chunk] !== undefined){
+    if (i == chunks.length - 1 && sub_tree[chunk] !== undefined) {
       log.warn('trying to stomp path', path);
       return;
     }
     sub_tree = sub_tree[chunk];
-    if (sub_tree === undefined){
+    if (sub_tree === undefined) {
       break;
     }
   }
@@ -51,11 +52,11 @@ Room.prototype.create_buf = function (path){
   buf = new ColabBuffer(self, path, ++self.cur_fid);
   self.bufs[buf.id] = buf;
   sub_tree = self.tree;
-  _.each(chunks, function(chunk, pos){
-    if (!sub_tree[chunk]){
+  _.each(chunks, function(chunk, pos) {
+    if (!sub_tree[chunk]) {
       sub_tree[chunk] = {};
     }
-    if (pos < chunks.length) {
+    if (pos < chunks.length - 1) {
       sub_tree = sub_tree[chunk];
     }
   });
