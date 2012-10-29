@@ -26,7 +26,7 @@ var BaseAgentConnection = function (id, conn, server) {
   self.auth_timeout_id = null;
   self.dmp_listener = self.on_dmp.bind(self);
 
-  self.allowed_actions = ["patch", "get_buf"];
+  self.allowed_actions = ["patch", "get_buf", "create_buf"];
 
   conn.on('end', function () {
     // server removes the listener
@@ -85,6 +85,11 @@ BaseAgentConnection.prototype.on_get_buf = function (req) {
   //TODO: return error
   var buf_json = buf.to_json();
   self.write("get_buf", buf_json);
+};
+BaseAgentConnection.prototype.on_create_buf = function (req) {
+  var self = this;
+  var buf = self.room.create_buf(req.path);
+  self.write('create_buf', buf.to_json());
 };
 
 BaseAgentConnection.prototype.send_room_info = function (ri) {

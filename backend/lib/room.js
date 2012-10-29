@@ -65,14 +65,15 @@ Room.prototype.create_buf = function (path){
 Room.prototype.to_json = function () {
   var self = this;
   var room_info = {
-    "bufs": _.map(self.bufs, function(buf, path){
-      return buf.to_json();
-    }),
+    "tree": self.tree,
     "owner": self.owner,
     "users": _.map(self.agents, function (agent, id) {
       return agent.username;
     })
   };
+  _.each(self.bufs, function(buf, id){
+    room_info.bufs[id] = buf.to_json();
+  });
   return room_info;
 };
 
