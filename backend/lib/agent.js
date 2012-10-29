@@ -32,15 +32,6 @@ var BaseAgentConnection = function (id, conn, server) {
     // server removes the listener
     self.emit('on_conn_end', self);
   });
-  self.on('dmp', function () {
-    if (!self._room) {
-      log.error("dmp emitted but agent isn't in a room!");
-      return;
-    }
-    self._room.emit.call(arguments);
-  });
-  self.on('patch', self.on_patch.bind(self));
-  self.on('get_buf', self.on_get_buf.bind(self));
 };
 
 util.inherits(BaseAgentConnection, events.EventEmitter);
@@ -85,22 +76,38 @@ BaseAgentConnection.prototype.auth = function (auth_data) {
 BaseAgentConnection.prototype.on_patch = function (req) {
   var self = this;
   var buf = self.room.get_buf(req.path);
-  buf.emit("dmp", self, req.patch, req.md5);
+  buf.patch(self, req.patch, req.md5);
 };
 
 BaseAgentConnection.prototype.on_get_buf = function (req) {
   var self = this;
-  var buf = self.room.get_buf(req.path);
+  var buf = self.room.get_buf(req.bid);
+  //TODO: return error
   var buf_json = buf.to_json();
-  buf_json.name = "get_buf";
-  self.write(buf_json);
+  self.write("get_buf", buf_json);
 };
 
+BaseAgentConnection.prototype.send_room_info = function (ri) {
+  var self = this;
+  self.write('room_info', ri);
+};
+
+BaseAgentConnection.prototype.on_dmp = function (source_client, json) {
+  var self = this;
+  if (source_client.id === self.id) {
+    log.debug("not sending to source client", self.id);
+  } else {
+    self.write('patch', json);
+  }
+};
 
 var AgentConnection = function (id, conn, server) {
   var self = this;
 
   BaseAgentConnection.call(self, id, conn, server);
+
+  self.on('get_buf', self.on_get_buf.bind(self));
+  self.on('patch', self.on_patch.bind(self));
 
   conn.on('connect', function () {
     log.debug("TCP connection");
@@ -157,26 +164,10 @@ AgentConnection.prototype.on_data = function (d) {
   }
 };
 
-AgentConnection.prototype.on_dmp = function (source_client, json) {
-  var self = this;
-  var str;
-  json.name = "patch";
-  if (source_client.id === self.id) {
-    log.debug("not sending to source client", self.id);
-  } else {
-    self.write(json);
-  }
-};
-
-AgentConnection.prototype.send_room_info = function (ri) {
-  var self = this;
-  ri.name = "room_info";
-  self.write(ri);
-};
-
-AgentConnection.prototype.write = function (json) {
-  var self = this;
-  var str = JSON.stringify(json);
+AgentConnection.prototype.write = function (name, json) {
+  var self = this, str;
+  json.name = name;
+  str = JSON.stringify(json);
   log.debug("writing", str);
   try {
     self.conn.write(str + "\n");
@@ -186,38 +177,20 @@ AgentConnection.prototype.write = function (json) {
   }
 };
 
-
 var SIOAgentConnection = function (id, conn, server) {
   var self = this;
 
   BaseAgentConnection.call(self, id, conn, server);
-
   conn.on('auth', self.auth.bind(self));
   conn.on('patch', self.on_patch.bind(self));
-  conn.on('get_buf', function (req) {
-    var path = req.path;
-    var buf = self.room.get_buf(req.path);
-    var buf_json = buf.to_json();
-    buf_json.name = "get_buf";
-    conn.emit("get_buf", buf_json);
-  });
+  conn.on('get_buf', self.on_get_buf.bind(self));
 };
 
 util.inherits(SIOAgentConnection, BaseAgentConnection);
 
-SIOAgentConnection.prototype.on_dmp = function (source_client, json) {
+SIOAgentConnection.prototype.write = function (name, json) {
   var self = this;
-  var str;
-  if (source_client.id === self.id) {
-    log.debug("not sending to source client", self.id);
-  } else {
-    self.conn.emit("patch", json);
-  }
-};
-
-SIOAgentConnection.prototype.send_room_info = function (ri) {
-  var self = this;
-  self.conn.emit("room_info", ri);
+  self.conn.emit(name, json);
 };
 
 module.exports = {

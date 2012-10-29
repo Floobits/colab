@@ -9,18 +9,17 @@ var _ = require('underscore');
 var log = require('./log');
 
 
-var ColabBuffer = function (room, path, fid) {
+var ColabBuffer = function (room, path, id) {
   var self = this;
   // TODO: this guid could have conflicts
-  self.guid = util.format("%s-%s", room.name, path);
-  self.fid = fid;
+  self.guid = util.format("%s-%s", room.name, id);
+  self.id = id;
   self.path = path;
   self.room = room;
   self._state = "";
   self._md5 = null;
   self._is_valid = true;
   log.debug("created new buffer", self.guid);
-  self.on('dmp', self.on_dmp.bind(self));
 };
 
 util.inherits(ColabBuffer, events.EventEmitter);
@@ -29,11 +28,12 @@ ColabBuffer.prototype.to_json = function () {
   var self = this;
   return {
     "path": self.path,
-    "buf": self._state
+    "buf": self._state,
+    "id": self.id
   };
 };
 
-ColabBuffer.prototype.on_dmp = function (client, patch_text, md5) {
+ColabBuffer.prototype.patch = function (client, patch_text, md5) {
   var self = this;
   var expected_md5;
   var hash;

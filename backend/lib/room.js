@@ -13,6 +13,8 @@ var Room = function (name, agent) {
   self.owner = agent.username;
   self.agents = {};
   self.bufs = {};
+  // directory in json :)
+  self.tree = {};
   self.cur_fid = 0;
 
   events.EventEmitter.call(self);
@@ -20,28 +22,57 @@ var Room = function (name, agent) {
 
 util.inherits(Room, events.EventEmitter);
 
-Room.prototype.get_buf = function (path) {
+Room.prototype.get_buf = function (id) {
   var self = this;
-  var buf = self.bufs[path];
-  if (buf === undefined) {
-    log.debug("buf for path", path, "doesn't exist. creating...");
-    log.debug("bufs:", self.bufs);
-    buf = new ColabBuffer(self, path, ++self.cur_fid);
-    self.bufs[path] = buf;
+  return self.bufs[id];
+};
+
+Room.prototype.create_buf = function (path){
+  log.debug("buf for path", path, "doesn't exist. creating...");
+
+  var sub_tree = self.tree;
+  var chunks = path.split("/");
+  var chunk;
+
+  // GOOD INTERVIEW QUESTION
+  for(var i=0; i<chunks.length; i++){
+    chunk = chunks[i];
+
+    if (i == chunks.length-1 && sub_tree[chunk] !== undefined){
+      log.warn('trying to stomp path', path);
+      return;
+    }
+    sub_tree = sub_tree[chunk];
+    if (sub_tree === undefined){
+      break;
+    }
   }
+
+  buf = new ColabBuffer(self, path, ++self.cur_fid);
+  self.bufs[buf.id] = buf;
+  sub_tree = self.tree;
+  _.each(chunks, function(chunk){
+    if (!sub_tree[chunk]){
+      sub_tree[chunk] = {};
+    }
+    sub_tree = sub_tree[chunk];
+  });
+  sub_tree = buf.id;
+
   return buf;
 };
 
 Room.prototype.to_json = function () {
   var self = this;
   var room_info = {
-    "buf_paths": self.buf_paths(),
+    "bufs": _.map(self.bufs, function(buf, path){
+      return buf.to_json();
+    }),
     "owner": self.owner,
-    "users": []
+    "users": _.map(self.agents, function (agent, id) {
+      return agent.username;
+    })
   };
-  _.each(self.agents, function (agent, id) {
-    room_info.users.push(agent.username);
-  });
   return room_info;
 };
 
