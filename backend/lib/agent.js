@@ -88,6 +88,7 @@ BaseAgentConnection.prototype.on_get_buf = function (req) {
   var buf_json = buf.to_json();
   self.write("get_buf", buf_json);
 };
+
 BaseAgentConnection.prototype.on_create_buf = function (req) {
   var self = this;
   var buf = self.room.create_buf(req.path);
