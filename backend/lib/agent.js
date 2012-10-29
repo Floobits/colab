@@ -82,9 +82,8 @@ BaseAgentConnection.prototype.on_patch = function (req) {
 BaseAgentConnection.prototype.on_get_buf = function (req) {
   var self = this;
   var buf = self.room.get_buf(req.id);
-  //TODO: return error
   if (!req.id){
-    return self.write('update');
+    return self.write("error", {"update": "yo shit!"});
   }
   var buf_json = buf.to_json();
   self.write("get_buf", buf_json);
@@ -92,7 +91,11 @@ BaseAgentConnection.prototype.on_get_buf = function (req) {
 BaseAgentConnection.prototype.on_create_buf = function (req) {
   var self = this;
   var buf = self.room.create_buf(req.path);
-  self.write('create_buf', buf.to_json());
+  if (buf) {
+    self.write("create_buf", buf.to_json());
+  } else {
+    self.write("error", {"msg": "create buf failed!"});
+  }
 };
 
 BaseAgentConnection.prototype.send_room_info = function (ri) {
