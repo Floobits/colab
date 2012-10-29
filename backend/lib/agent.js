@@ -75,7 +75,7 @@ BaseAgentConnection.prototype.auth = function (auth_data) {
 
 BaseAgentConnection.prototype.on_patch = function (req) {
   var self = this;
-  var buf = self.room.get_buf(req.path);
+  var buf = self.room.get_buf(req.id);
   buf.patch(self, req.patch, req.md5);
 };
 
