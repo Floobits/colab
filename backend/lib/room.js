@@ -69,7 +69,8 @@ Room.prototype.to_json = function () {
     "owner": self.owner,
     "users": _.map(self.agents, function (agent, id) {
       return agent.username;
-    })
+    }),
+    "bufs": {}
   };
   _.each(self.bufs, function(buf, id){
     room_info.bufs[id] = buf.to_json();
