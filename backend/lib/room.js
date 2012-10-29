@@ -28,6 +28,7 @@ Room.prototype.get_buf = function (id) {
 };
 
 Room.prototype.create_buf = function (path){
+  var self = this;
   log.debug("buf for path", path, "doesn't exist. creating...");
 
   var sub_tree = self.tree;
@@ -37,7 +38,6 @@ Room.prototype.create_buf = function (path){
   // GOOD INTERVIEW QUESTION
   for(var i=0; i<chunks.length; i++){
     chunk = chunks[i];
-
     if (i == chunks.length-1 && sub_tree[chunk] !== undefined){
       log.warn('trying to stomp path', path);
       return;

@@ -81,8 +81,11 @@ BaseAgentConnection.prototype.on_patch = function (req) {
 
 BaseAgentConnection.prototype.on_get_buf = function (req) {
   var self = this;
-  var buf = self.room.get_buf(req.bid);
+  var buf = self.room.get_buf(req.id);
   //TODO: return error
+  if (!req.id){
+    return self.write('update');
+  }
   var buf_json = buf.to_json();
   self.write("get_buf", buf_json);
 };
@@ -189,6 +192,7 @@ var SIOAgentConnection = function (id, conn, server) {
   conn.on('auth', self.auth.bind(self));
   conn.on('patch', self.on_patch.bind(self));
   conn.on('get_buf', self.on_get_buf.bind(self));
+  conn.on('create_buf', self.on_create_buf.bind(self));
 };
 
 util.inherits(SIOAgentConnection, BaseAgentConnection);
