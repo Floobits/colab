@@ -51,11 +51,13 @@ Room.prototype.create_buf = function (path){
   buf = new ColabBuffer(self, path, ++self.cur_fid);
   self.bufs[buf.id] = buf;
   sub_tree = self.tree;
-  _.each(chunks, function(chunk){
+  _.each(chunks, function(chunk, pos){
     if (!sub_tree[chunk]){
       sub_tree[chunk] = {};
     }
-    sub_tree = sub_tree[chunk];
+    if (pos < chunks.length) {
+      sub_tree = sub_tree[chunk];
+    }
   });
   sub_tree = buf.id;
 
