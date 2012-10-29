@@ -33,6 +33,7 @@ Room.prototype.create_buf = function (path) {
 
   var sub_tree = self.tree;
   var chunks = path.split("/");
+  var file_name = chunks.slice(-1)[0];
   var chunk;
   var i;
 
@@ -60,7 +61,7 @@ Room.prototype.create_buf = function (path) {
       sub_tree = sub_tree[chunk];
     }
   });
-  sub_tree = buf.id;
+  sub_tree[file_name] = buf.id;
 
   return buf;
 };
