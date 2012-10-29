@@ -29,7 +29,7 @@ Room.prototype.get_buf = function (id) {
 
 Room.prototype.create_buf = function (path){
   var self = this;
-  log.debug("buf for path", path, "doesn't exist. creating...");
+  log.debug("creating buf for path", path);
 
   var sub_tree = self.tree;
   var chunks = path.split("/");
