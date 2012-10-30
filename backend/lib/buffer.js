@@ -79,7 +79,7 @@ ColabBuffer.prototype.patch = function (client, patch_text, md5) {
 
   self.room.emit('dmp', client, {
     md5: self.md5,
-    guid: self.guid,
+    id: self.id,
     path: self.path,
     patch: DMP.patch_toText(patches)
   });
