@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec /data/colab/bin/colab 2>&1
