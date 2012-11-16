@@ -2,6 +2,6 @@
 
 ## Setup
 
-* Install dependencies in apt.txt
+* Install dependencies in setup/apt.txt
 * npm install
 
