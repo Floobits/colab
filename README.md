@@ -3,5 +3,6 @@
 ## Setup
 
 * Install dependencies in setup/apt.txt
-* npm install
-
+* `npm install`
+* `cd lib/`, copy `settings.js.example` to `settings.js`. Modify to suit.
+* `npm start`
