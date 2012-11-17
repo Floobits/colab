@@ -6,7 +6,7 @@ then
   exit 0
 fi
 
-rsync -avz --exclude=node_modules . $1:/data/colab
+rsync -avz --exclude=node_modules --exclude=lib/settings.js . $1:/data/colab
 
 ssh $1 "cd /data/colab/ && npm install"
 ssh $1 "sudo sv restart /service/colab/"
