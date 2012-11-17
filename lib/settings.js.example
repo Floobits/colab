@@ -2,7 +2,7 @@ exports.json_port = 3148;
 exports.socket_io_port = 8048;
 exports.socket_io_transports = ["websocket", "xhr-polling", "jsonp-polling"];
 
-exports.socket_io_port_ssl = 8448;
+//exports.socket_io_port_ssl = 8448;
 exports.ssl_cert = "";
 exports.ssl_key = "";
 
