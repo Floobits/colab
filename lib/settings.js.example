@@ -7,3 +7,10 @@ exports.ssl_cert = "";
 exports.ssl_key = "";
 
 exports.max_buf_history = 15;
+
+exports.db_info = {
+  user: "floobits",
+  password: "1234",
+  database: "floobits",
+  host: "127.0.0.1"
+};
