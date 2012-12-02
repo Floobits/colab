@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Mail logs if we crashed
+if [ $1 -ne 0 ]
+then
+  echo "Fuuuuuuuck. Colab died!"
+  tail -n 30 log/main/current | mail "robomails@floobits.com" -s "Colab crashed. Exit code $1"
+  sleep 5
+  exit $1
+fi
