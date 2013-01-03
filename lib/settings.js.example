@@ -16,3 +16,5 @@ exports.db_info = {
   database: "floobits",
   host: "127.0.0.1"
 };
+
+exports.checksum_patches = true;
