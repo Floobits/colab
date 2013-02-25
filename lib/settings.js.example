@@ -9,6 +9,7 @@ exports.socket_io_transports = ["websocket"];
 //exports.socket_io_port_ssl = 8448;
 
 exports.max_buf_history = 15;
+exports.max_buf_len = 1000000;
 exports.patch_delay = 0;
 
 exports.db_info = {
