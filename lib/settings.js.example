@@ -1,17 +1,6 @@
 exports.ssl_cert = "";
 exports.ssl_key = "";
 
-exports.json_port = 3148;
-//exports.json_port_ssl = 3448;
-exports.socket_io_port = 8048;
-exports.socket_io_transports = ["websocket"];
-
-//exports.socket_io_port_ssl = 8448;
-
-exports.max_buf_history = 15;
-exports.max_buf_len = 1000000;
-exports.patch_delay = 0;
-
 exports.db_info = {
   user: "floobits",
   password: "1234",
@@ -19,4 +8,16 @@ exports.db_info = {
   host: "127.0.0.1"
 };
 
-exports.checksum_patches = true;
+exports.json_port = 3148;
+//exports.json_port_ssl = 3448;
+exports.socket_io_port = 8048;
+//exports.socket_io_port_ssl = 8448;
+exports.socket_io_transports = ["websocket"];
+
+exports.max_buf_history = 15;
+exports.max_buf_len = 1000000; // 1MB
+
+exports.checksum_patches = true; // false will apply patches even if the md5sums don't match
+exports.patch_delay = 0; // milliseconds. batch-up patches to reduce resource consumption for everyone
+
+exports.s3_bucket = null;
