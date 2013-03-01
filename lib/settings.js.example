@@ -20,4 +20,8 @@ exports.max_buf_len = 1000000; // 1MB
 exports.checksum_patches = true; // false will apply patches even if the md5sums don't match
 exports.patch_delay = 0; // milliseconds. batch-up patches to reduce resource consumption for everyone
 
-exports.s3_bucket = null;
+exports.s3 = {
+  bucket: "",
+  key: "",
+  secret: ""
+};
