@@ -1,3 +1,6 @@
+git
+mercurial
 nodejs
 npm
 runit
+subversion
