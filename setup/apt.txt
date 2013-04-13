@@ -1,5 +1,6 @@
 git
 mercurial
+msmtp
 nodejs
 npm
 runit

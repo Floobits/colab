@@ -1,10 +1,12 @@
 #!/bin/sh
 
 # Mail logs if we crashed
+echo 'Colab stopped'
 if [ $1 -ne 0 ]
 then
-  echo "Fuuuuuuuck. Colab died!"
-  tail -n 30 log/main/current | mail "robomails@floobits.com" -s "Colab crashed. Exit code $1"
-  sleep 5
+  HOSTNAME=`hostname`
+  echo 'Fuuuuuuuck. Colab died!'
+  (echo "Subject: Colab crashed on $HOSTNAME. Exit code $1\n"; tail -n 30 ./log/main/current; ) | msmtp "robomails@floobits.com"
+  sleep 1
   exit $1
 fi
