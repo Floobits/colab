@@ -32,6 +32,9 @@ exports.buf_storage = {
   }
 };
 
-exports.readme_text = "# Welcome to Floobits!\n\nIt looks like you're in an empty room. If you're using the web editor, you can \nclick on the menu in the upper left to upload or create files.\n\nIf you're using a native editor, you might want to read our help docs at \nhttps://floobits.com/help/plugins/\n";
+exports.readme = {
+  name: "FLOOBITS_README.md",
+  text: "# Welcome to Floobits!\n\nIt looks like you're in an empty room. If you're using the web editor, you can \nclick on the menu in the upper left to upload or create files.\n\nIf you're using a native editor, you might want to read our help docs at \nhttps://floobits.com/help/plugins/\n"
+};
 
 exports.repo_dir = "";
