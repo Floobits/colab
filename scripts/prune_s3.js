@@ -42,7 +42,7 @@ async.auto({
       db_buf = _.find(res.db_bufs.rows, function (buf) {
         return buf.fid === fid && buf.room_id === room_id;
       });
-      return !_.isUndefined(db_buf);
+      return _.isUndefined(db_buf);
     });
 
     to_delete = _.map(to_delete, function (s3_buf) {
