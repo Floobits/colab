@@ -36,7 +36,7 @@ async.auto({
         fid,
         room_id;
 
-      room_id = s3_buf.Key.split("-");
+      room_id = s3_buf.Key.split("/");
       fid = parseInt(room_id[1], 10);
       room_id = parseInt(room_id[0], 10);
       db_buf = _.find(res.db_bufs.rows, function (buf) {
