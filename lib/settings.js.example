@@ -8,6 +8,10 @@ exports.db_info = {
   host: "127.0.0.1"
 };
 
+exports.django_base_url = "https://floobits.com";
+exports.django_user = "";
+exports.django_pass = "";
+
 exports.json_port = 3148;
 //exports.json_port_ssl = 3448;
 exports.socket_io_port = 8048;
