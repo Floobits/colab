@@ -1,4 +1,5 @@
 git
+make
 mercurial
 msmtp
 nodejs
