@@ -1,5 +1,6 @@
 exports.ssl_cert = "";
 exports.ssl_key = "";
+//exports.ssl_ca = [""];
 
 exports.db_info = {
   user: "floobits",
