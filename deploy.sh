@@ -1,22 +1,25 @@
 #!/bin/sh
 
-if [ $# -ne 1 ]
+if [ $# -ne 2 ]
 then
-  echo "Usage: $0 hostname"
+  echo "Usage: $0 release-name.tar.gz hostname"
   exit 0
 fi
 
-DATETIME=`date -u '+%Y_%m_%d_%H%M'`
-RELEASE_NAME="colab-$DATETIME"
+HOST=$2
+TARBALL=$1
+RELEASE_NAME=$(basename "$TARBALL")
+RELEASE_NAME="${RELEASE_NAME%%.*}"
+RELEASE_DIR="/data/releases/$RELEASE_NAME"
 
-tar -c -z -f $RELEASE_NAME.tar.gz `git ls-files`
+echo "Deploying $RELEASE_NAME to $HOST"
 
-scp -C $RELEASE_NAME.tar.gz $1:/tmp
+scp -C $RELEASE_NAME.tar.gz $HOST:/tmp
 
-ssh $1 "sudo mkdir /data/releases/$RELEASE_NAME && sudo tar xzf /tmp/$RELEASE_NAME.tar.gz --directory /data/releases/$RELEASE_NAME"
-ssh $1 "sudo cp /data/colab/lib/settings.js /data/releases/$RELEASE_NAME/lib/settings.js"
-ssh $1 "sudo cp -r /data/colab/node_modules /data/releases/$RELEASE_NAME/"
-ssh $1 "cd /data/releases/$RELEASE_NAME && \
+ssh $HOST "sudo mkdir /data/releases/$RELEASE_NAME && sudo tar xzf /tmp/$RELEASE_NAME.tar.gz --directory /data/releases/$RELEASE_NAME"
+ssh $HOST "sudo cp /data/colab/lib/settings.js /data/releases/$RELEASE_NAME/lib/settings.js"
+ssh $HOST "sudo cp -r /data/colab/node_modules /data/releases/$RELEASE_NAME/"
+ssh $HOST "cd /data/releases/$RELEASE_NAME && \
 sudo npm install && \
 sudo ln -s -f /data/releases/$RELEASE_NAME /data/colab-new && \
 sudo mv -T -f /data/colab-new /data/colab && \
