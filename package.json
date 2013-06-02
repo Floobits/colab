@@ -1,6 +1,7 @@
 {
   "name": "floobits_server",
   "bin": "./bin/colab",
+  "repository": "https://github.com/Floobits/nodejs-shit/",
   "contributors": [
     "Matt Kaniaris <mkaniaris@gmail.com>",
     "Geoff Greer <geoff@greer.fm>"
