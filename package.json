@@ -11,7 +11,6 @@
     "async": "0.2.x",
     "diff_match_patch": "0.1.x",
     "knox": "0.5.x",
-    "nodegit": "0.0.x",
     "optimist": "0.2.x",
     "pg": "0.7.x",
     "request": "2.x",
