@@ -129,7 +129,6 @@ FakeAgentConnection.prototype.write = function (name, data) {
 
 
 ColabBuffer.prototype.save = function (create, cb) {
-  console.log("lolz saving");
   cb();
 };
 
@@ -160,7 +159,7 @@ var verify = function (test, buf, agents) {
   _.each(agents, function (agent) {
     test.strictEqual(buf._state, agent.buf, util.format("agent %s does not match!", agent.toString()));
   });
-}
+};
 
 var agent1,
   agent2,
@@ -168,6 +167,7 @@ var agent1,
   buf;
 
 var setup = function (cb) {
+  log.set_log_level("error");
   r = new room.Room(-1, "fake_room", "fake_owner", {
     cur_fid: 0,
     max_size: 2147483647,
@@ -182,8 +182,9 @@ var setup = function (cb) {
 
   agent1 = new FakeAgentConnection(r, 1);
   agent2 = new FakeAgentConnection(r, 2);
+  log.set_log_level("debug");
   cb();
-}
+};
 
 var teardown = function (cb) {
   cb();
@@ -229,7 +230,6 @@ var test2 = function (test) {
   test.done();
 };
 
-
 var test3 = function (test) {
   agent1.buf = "abc";
   agent2.buf = "abc";
@@ -253,7 +253,8 @@ var test3 = function (test) {
 
   verify(test, buf, [agent1, agent2]);
   test.done();
-}
+};
+
 
 module.exports = {
   setUp: setup,
