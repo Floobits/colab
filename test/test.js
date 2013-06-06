@@ -122,6 +122,8 @@ FakeAgentConnection.prototype.write = function (name, data) {
 
   if (name === "patch") {
     self.patch_events.push(data);
+  } else if (name === "get_buf") {
+    throw new Error(util.format("%s OH NO! GET BUF", self.toString()));
   }
 };
 
@@ -152,12 +154,20 @@ var patch = function (agent, after, buf) {
   log.log("buf state is", buf._state);
 };
 
-var run = function () {
-  var agent1,
-    agent2,
-    r,
-    buf;
 
+var verify = function (test, buf, agents) {
+  log.log("buf is", buf._state);
+  _.each(agents, function (agent) {
+    test.strictEqual(buf._state, agent.buf, util.format("agent %s does not match!", agent.toString()));
+  });
+}
+
+var agent1,
+  agent2,
+  r,
+  buf;
+
+var setup = function (cb) {
   r = new room.Room(-1, "fake_room", "fake_owner", {
     cur_fid: 0,
     max_size: 2147483647,
@@ -172,13 +182,19 @@ var run = function () {
 
   agent1 = new FakeAgentConnection(r, 1);
   agent2 = new FakeAgentConnection(r, 2);
-  
+  cb();
+}
+
+var teardown = function (cb) {
+  cb();
+};
+
+var test1 = function (test) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
   patch(agent1, "abcd", buf);
   patch(agent1, "abcde", buf);
-
   patch(agent2, "abcd", buf);
 
   agent2.pop_patch();
@@ -189,10 +205,60 @@ var run = function () {
   agent1.pop_patch();
   agent1.pop_patch();
 
-  agent1.log_buf();
-  agent2.log_buf();
+  verify(test, buf, [agent1, agent2]);
+  test.done();
+};
+
+var test2 = function (test) {
+  agent1.buf = "abc";
+  agent2.buf = "abc";
+
+  patch(agent1, "abcd", buf);
+  patch(agent1, "abcde", buf);
+  patch(agent2, "abcf", buf);
+
+  agent2.pop_patch();
+  agent2.pop_patch();
+  agent2.pop_patch();
+  agent2.pop_patch();
+
+  agent1.pop_patch();
+  agent1.pop_patch();
+
+  verify(test, buf, [agent1, agent2]);
+  test.done();
+};
+
+
+var test3 = function (test) {
+  agent1.buf = "abc";
+  agent2.buf = "abc";
+
+  patch(agent1, "abcd", buf);
+  patch(agent1, "abcde", buf);
+
+  patch(agent2, "abcd", buf);
+  patch(agent2, "abcde", buf);
+  patch(agent2, "abcdef", buf);
+
+  agent2.pop_patch();
+  agent2.pop_patch();
+  agent2.pop_patch();
+  agent2.pop_patch();
+  agent2.pop_patch();
+
+  agent1.pop_patch();
+  agent1.pop_patch();
+  agent1.pop_patch();
+
+  verify(test, buf, [agent1, agent2]);
+  test.done();
 }
 
 module.exports = {
-  run: run
+  setUp: setup,
+  tearDown: teardown,
+  test1: test1,
+  test2: test2,
+  test3: test3,
 };
