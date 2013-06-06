@@ -21,6 +21,7 @@
     "node": ">=0.10.0"
   },
   "scripts": {
-    "start": "./bin/colab"
+    "start": "./bin/colab",
+    "test": "NODE_PATH=lib ./test/run_tests"
   }
 }

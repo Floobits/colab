@@ -8,20 +8,14 @@ var dmp_module = require("diff_match_patch");
 var DMP = new dmp_module.diff_match_patch();
 var _ = require("underscore");
 
-var agent = require("./agent");
-var ColabBuffer = require("./buffer");
-var log = require("./log");
-var room = require("./room");
-var utils = require("./utils");
+var agent = require("agent");
+var ColabBuffer = require("../lib/buffer");
+var log = require("log");
+var room = require("room");
+var utils = require("utils");
 
 
 log.set_log_level("debug");
-
-var agent1,
-  agent2,
-  r,
-  buf,
-  agent_id = 1;
 
 var MockConn = function (agent) {
   var self = this;
@@ -37,12 +31,12 @@ MockConn.prototype.write = function (name, data) {
 };
 
 
-var FakeAgentConnection = function (r) {
+var FakeAgentConnection = function (r, agent_id) {
   var self = this,
     conn = new MockConn(self),
     room_info;
 
-  agent.AgentConnection.call(self, agent_id++, conn, null);
+  agent.AgentConnection.call(self, agent_id, conn, null);
 
   clearTimeout(self.auth_timeout_id);
   self.auth_timeout_id = null;
@@ -132,26 +126,13 @@ FakeAgentConnection.prototype.write = function (name, data) {
 };
 
 
-r = new room.Room(-1, "fake_room", "fake_owner", {
-  cur_fid: 0,
-  max_size: 2147483647,
-  require_ssl: false
-});
-
 ColabBuffer.prototype.save = function (create, cb) {
   console.log("lolz saving");
   cb();
 };
 
-var buf = new ColabBuffer(r, 0, "test.txt", "abc", undefined, true);
-r.bufs[buf.id] = buf;
-r.tree_add_buf(buf);
 
-agent1 = new FakeAgentConnection(r);
-agent2 = new FakeAgentConnection(r);
-
-
-var patch = function (agent, after) {
+var patch = function (agent, after, buf) {
   var before,
     md5_before,
     md5_after,
@@ -171,18 +152,47 @@ var patch = function (agent, after) {
   log.log("buf state is", buf._state);
 };
 
-agent1.buf = "abc";
-agent2.buf = "abc";
+var run = function () {
+  var agent1,
+    agent2,
+    r,
+    buf;
 
-patch(agent1, "abcd");
-patch(agent1, "abcde");
+  r = new room.Room(-1, "fake_room", "fake_owner", {
+    cur_fid: 0,
+    max_size: 2147483647,
+    require_ssl: false
+  });
+  buf = new ColabBuffer(r, 0, "test.txt", "abc", undefined, true);
+  // Set this so the test doesn't hang for 90 seconds before exiting.
+  buf.save_timeout = 1;
 
-patch(agent2, "abcd");
+  r.bufs[buf.id] = buf;
+  r.tree_add_buf(buf);
 
-agent2.pop_patch();
-agent2.pop_patch();
+  agent1 = new FakeAgentConnection(r, 1);
+  agent2 = new FakeAgentConnection(r, 2);
+  
+  agent1.buf = "abc";
+  agent2.buf = "abc";
 
-agent1.pop_patch();
+  patch(agent1, "abcd", buf);
+  patch(agent1, "abcde", buf);
 
-agent1.log_buf();
-agent2.log_buf();
+  patch(agent2, "abcd", buf);
+
+  agent2.pop_patch();
+  agent2.pop_patch();
+  agent2.pop_patch();
+  agent2.pop_patch();
+
+  agent1.pop_patch();
+  agent1.pop_patch();
+
+  agent1.log_buf();
+  agent2.log_buf();
+}
+
+module.exports = {
+  run: run
+};
