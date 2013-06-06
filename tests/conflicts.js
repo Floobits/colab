@@ -13,13 +13,8 @@ var test1 = function (test) {
   patch(agent1, "abcde");
   patch(agent2, "abcd");
 
-  agent2.pop_patch();
-  agent2.pop_patch();
-  agent2.pop_patch();
-  agent2.pop_patch();
-
-  agent1.pop_patch();
-  agent1.pop_patch();
+  agent2.pop_patch(-1);
+  agent1.pop_patch(-1);
 
   verify(test, [agent1, agent2]);
   test.done();
@@ -33,13 +28,8 @@ var test2 = function (test) {
   patch(agent1, "abcde");
   patch(agent2, "abcf");
 
-  agent2.pop_patch();
-  agent2.pop_patch();
-  agent2.pop_patch();
-  agent2.pop_patch();
-
-  agent1.pop_patch();
-  agent1.pop_patch();
+  agent2.pop_patch(-1);
+  agent1.pop_patch(-1);
 
   verify(test, [agent1, agent2]);
   test.done();
@@ -56,15 +46,8 @@ var test3 = function (test) {
   patch(agent2, "abcde");
   patch(agent2, "abcdef");
 
-  agent2.pop_patch();
-  agent2.pop_patch();
-  agent2.pop_patch();
-  agent2.pop_patch();
-  agent2.pop_patch();
-
-  agent1.pop_patch();
-  agent1.pop_patch();
-  agent1.pop_patch();
+  agent2.pop_patch(-1);
+  agent1.pop_patch(-1);
 
   verify(test, [agent1, agent2]);
   test.done();

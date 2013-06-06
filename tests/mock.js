@@ -88,14 +88,20 @@ FakeAgentConnection.prototype.log_buf = function () {
   log.log(self.toString(), "buf is", self.buf);
 };
 
-FakeAgentConnection.prototype.pop_patch = function() {
+FakeAgentConnection.prototype.pop_patch = function (count) {
   var self = this,
     data;
-  data = self.patch_events.shift();
-  if (data) {
-    self.patch(data.patch, data.md5_before, data.md5_after);
-  } else {
-    log.warn("No more patches to apply.");
+
+  count = count === -1 ? self.patch_events.length : (count || 1);
+
+  while (count > 0) {
+    data = self.patch_events.shift();
+    if (data) {
+      self.patch(data.patch, data.md5_before, data.md5_after);
+    } else {
+      log.warn("No more patches to apply.");
+    }
+    count--;
   }
 };
 
