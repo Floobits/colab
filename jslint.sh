@@ -7,4 +7,4 @@ jslint \
 --node \
 --nomen \
 --white \
-lib/*.js test/*.js
+lib/*.js tests/*.js
