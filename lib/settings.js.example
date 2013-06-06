@@ -25,7 +25,6 @@ exports.max_buf_history = 15;
 exports.max_buf_len = 1000000; // 1MB
 
 exports.checksum_patches = true; // false will apply patches even if the md5sums don't match
-exports.patch_delay = 0; // milliseconds. batch-up patches to reduce resource consumption for everyone
 exports.save_delay = 60000;
 
 exports.buf_storage = {
