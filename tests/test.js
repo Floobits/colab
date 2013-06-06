@@ -45,6 +45,7 @@ var verify = function (test, agents) {
   _.each(agents, function (agent) {
     test.strictEqual(buf._state, agent.buf, util.format("agent %s does not match!", agent.toString()));
   });
+  console.log("\n------------------------------\n");
 };
 
 var setup = function (cb) {
