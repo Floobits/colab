@@ -1,3 +1,4 @@
 #!/usr/bin/env node
 
-require('./test').run();
+var reporter = require('nodeunit').reporters.default;
+reporter.run(['tests/conflicts.js']);

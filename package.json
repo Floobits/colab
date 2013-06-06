@@ -23,6 +23,6 @@
   },
   "scripts": {
     "start": "./bin/colab",
-    "test": "NODE_PATH=lib /usr/bin/env node node_modules/nodeunit/bin/nodeunit test"
+    "test": "NODE_PATH=lib:tests ./tests/run_tests"
   }
 }
