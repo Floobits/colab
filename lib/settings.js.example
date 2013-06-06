@@ -2,6 +2,8 @@ exports.ssl_cert = "";
 exports.ssl_key = "";
 //exports.ssl_ca = [""];
 
+exports.log_level = "debug";
+
 exports.db_info = {
   user: "floobits",
   password: "1234",
