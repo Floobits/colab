@@ -1,4 +1,6 @@
 *.pyc
 .DS_Store
+.floo
+.sublime-project
 node_modules
 npm-debug.log
