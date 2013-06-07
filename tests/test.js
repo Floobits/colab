@@ -12,13 +12,9 @@ var mock = require("mock");
 
 log.set_log_level("debug");
 
-// GLOBALS
-/*global agent1: true, agent2: true */
-agent1 = null;
-agent2 = null;
+var buf;
+agent_id = 0;
 
-var r,
-  buf;
 
 var patch = function (agent, after) {
   var before,
@@ -62,8 +58,9 @@ var setup = function (cb) {
   r.bufs[buf.id] = buf;
   r.tree_add_buf(buf);
 
-  agent1 = new mock.FakeAgentConnection(r, 1);
-  agent2 = new mock.FakeAgentConnection(r, 2);
+  agent1 = new mock.FakeAgentConnection(r, ++agent_id);
+  agent2 = new mock.FakeAgentConnection(r, ++agent_id);
+
   log.set_log_level("debug");
   cb();
 };

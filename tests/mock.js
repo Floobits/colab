@@ -98,8 +98,6 @@ FakeAgentConnection.prototype.pop_patch = function (count) {
     data = self.patch_events.shift();
     if (data) {
       self.patch(data.patch, data.md5_before, data.md5_after);
-    } else {
-      log.warn("No more patches to apply.");
     }
     count--;
   }
