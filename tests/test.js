@@ -1,3 +1,4 @@
+/*global agent_id: true, r: true, agent1: true, agent2: true */
 var util = require("util");
 
 var dmp_module = require("diff_match_patch");

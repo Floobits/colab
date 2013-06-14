@@ -6,5 +6,5 @@ jslint \
 --todo \
 --node \
 --nomen \
---white \
+--indent 2 \
 lib/*.js tests/*.js

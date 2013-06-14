@@ -103,7 +103,7 @@ FakeAgentConnection.prototype.pop_patch = function (count) {
   }
 };
 
-FakeAgentConnection.prototype.patch = function(patch_text, md5_before, md5_after) {
+FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_after) {
   var self = this,
     buf = self.buf,
     patches,

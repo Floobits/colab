@@ -1,3 +1,4 @@
+/*global agent_id: true, r: true, agent1: true, agent2: true */
 var _ = require("underscore");
 
 var log = require("log");
@@ -59,56 +60,64 @@ var test3 = function (test) {
 var permute_patches = function () {
   var args,
     test,
-    agents = {};
+    agents = {},
+    agents_patches,
+    permute,
+    ops;
   args = Array.prototype.slice.call(arguments);
   test = args[0];
   agents_patches = args.slice(1);
 
   _.each(agents_patches, function (agent_patches) {
     agent_id++;
-    agent = new mock.FakeAgentConnection(r, agent_id);
+    var agent = new mock.FakeAgentConnection(r, agent_id);
     agent._patches = agent_patches;
     agents[agent_id] = agent;
   });
 
-  var permute = function (agent1, agent2) {
+  permute = function (agent1, agent2) {
     agent1._remaining_patches = _.clone(agent1._patches);
     agent2._remaining_patches = _.clone(agent2._patches);
 
-    var ops = [];
-    var choice;
-    var patch_obj;
+    var ops = [],
+      choice,
+      patch_obj,
+      pop_agent1,
+      pop_agent2;
+
+    pop_agent1 = function () {
+      agent1.pop_patch(1);
+    };
+    pop_agent2 = function () {
+      agent2.pop_patch(1);
+    };
 
     while (agent1._remaining_patches.length > 0 || agent2._remaining_patches.length > 0) {
       choice = Math.floor(Math.random() * 4);
       switch (choice) {
-        case 0:
-          if (agent1._remaining_patches.length > 0) {
-            patch_obj = agent1._remaining_patches[0];
-            log.debug("agent1 patch:", patch_obj);
-            agent1._remaining_patches = agent1._remaining_patches.slice(1);
-            ops.push(patch.bind(null, agent1, patch_obj));
-          }
+      case 0:
+        if (agent1._remaining_patches.length > 0) {
+          patch_obj = agent1._remaining_patches[0];
+          log.debug("agent1 patch:", patch_obj);
+          agent1._remaining_patches = agent1._remaining_patches.slice(1);
+          ops.push(patch.bind(null, agent1, patch_obj));
+        }
         break;
-        case 1:
-          if (agent2._remaining_patches.length > 0) {
-            patch_obj = agent2._remaining_patches[0];
-            log.debug("agent2 patch:", patch_obj);
-            agent2._remaining_patches = agent2._remaining_patches.slice(1);
-            ops.push(patch.bind(null, agent2, patch_obj));
-          }
+      case 1:
+        if (agent2._remaining_patches.length > 0) {
+          patch_obj = agent2._remaining_patches[0];
+          log.debug("agent2 patch:", patch_obj);
+          agent2._remaining_patches = agent2._remaining_patches.slice(1);
+          ops.push(patch.bind(null, agent2, patch_obj));
+        }
         break;
-        case 2:
-          log.debug("agent1 pop patch");
-          ops.push(function () {
-            agent1.pop_patch(1);
-          });
+      case 2:
+        log.debug("agent1 pop patch");
+        ops.push(pop_agent1);
         break;
-        case 3:
-          log.debug("agent2 pop patch");
-          ops.push(function () {
-            agent2.pop_patch(1);
-          });
+      case 3:
+        log.debug("agent2 pop patch");
+        ops.push(pop_agent2);
         break;
       }
     }
@@ -122,11 +131,11 @@ var permute_patches = function () {
     return ops;
   };
 
-  ops = permute(agents[agent_id-1], agents[agent_id]);
+  ops = permute(agents[agent_id - 1], agents[agent_id]);
   _.each(ops, function (op) {
     op();
   });
-  verify(test, [agents[agent_id-1], agents[agent_id]]);
+  verify(test, [agents[agent_id - 1], agents[agent_id]]);
 };
 
 var test4 = function (test) {
@@ -161,7 +170,7 @@ var test5 = function (test) {
 var test6 = function (test) {
   permute_patches(test, ["abc", "abcd", "abcde"], ["abc", "abcd", "abcde", "abcdef"]);
   test.done();
-}
+};
 
 
 module.exports = {
@@ -181,8 +190,7 @@ module.exports = {
 // module.exports["test10"] = test6;
 // module.exports["test11"] = test6;
 
- 
-module.exports['afsdasdasf'] = function(test) {
+module.exports.afsdasdasf = function (test) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
