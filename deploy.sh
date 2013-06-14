@@ -1,13 +1,20 @@
 #!/bin/sh
 
-if [ $# -ne 2 ]
+if [ $# -ne 2 ] && [ $# -ne 1 ]
 then
   echo "Usage: $0 release-name.tar.gz hostname"
   exit 0
 fi
 
-HOST=$2
-TARBALL=$1
+if [ $# -eq 1 ]
+then
+  TARBALL=`./build_release.sh`
+  HOST=$1
+else
+  TARBALL=$1
+  HOST=$2
+fi
+
 RELEASE_NAME=$(basename "$TARBALL")
 RELEASE_NAME="${RELEASE_NAME%%.*}"
 RELEASE_DIR="/data/releases/$RELEASE_NAME"
