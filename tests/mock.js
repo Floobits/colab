@@ -4,8 +4,7 @@ var path = require("path");
 var util = require("util");
 
 var async = require("async");
-var dmp_module = require("diff_match_patch");
-var DMP = new dmp_module.diff_match_patch();
+var DMP = require("native-diff-match-patch");
 var _ = require("underscore");
 
 var agent = require("agent");
@@ -106,11 +105,9 @@ FakeAgentConnection.prototype.pop_patch = function (count) {
 FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_after) {
   var self = this,
     buf = self.buf,
-    patches,
     result;
 
-  patches = DMP.patch_fromText(patch_text);
-  result = DMP.patch_apply(patches, buf);
+  result = DMP.patch_apply(patch_text, buf);
   if (utils.patched_cleanly(result) === false) {
     log.error("Patch wasn't applied!", result);
     return;
