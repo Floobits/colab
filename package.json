@@ -11,6 +11,7 @@
     "async": "0.2.x",
     "diff_match_patch": "0.1.x",
     "knox": "0.5.x",
+    "native-diff-match-patch": "0.0.x",
     "nodeunit": "0.8.x",
     "optimist": "0.2.x",
     "pg": "0.7.x",
