@@ -8,7 +8,7 @@ var DMP = require("native-diff-match-patch");
 var _ = require("underscore");
 
 var agent = require("agent");
-var ColabBuffer = require("../lib/buffer");
+var buf = require("../lib/buffer");
 var log = require("log");
 var room = require("room");
 var utils = require("utils");
@@ -104,10 +104,9 @@ FakeAgentConnection.prototype.pop_patch = function (count) {
 
 FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_after) {
   var self = this,
-    buf = self.buf,
     result;
 
-  result = DMP.patch_apply(patch_text, buf);
+  result = DMP.patch_apply(patch_text, self.buf);
   if (utils.patched_cleanly(result) === false) {
     log.error("Patch wasn't applied!", result);
     return;
@@ -129,12 +128,12 @@ FakeAgentConnection.prototype.write = function (name, data) {
 };
 
 
-ColabBuffer.prototype.save = function (create, cb) {
+buf.BaseBuffer.prototype.save = function (create, cb) {
   cb();
 };
 
 
 module.exports = {
   FakeAgentConnection: FakeAgentConnection,
-  ColabBuffer: ColabBuffer,
+  buf: buf
 };

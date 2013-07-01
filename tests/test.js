@@ -23,6 +23,9 @@ var patch = function (agent, after) {
     patches;
 
   before = agent.buf;
+  if (buf.encoding === "utf8") {
+    before = before.toString();
+  }
 
   md5_before = utils.md5(before);
   md5_after = utils.md5(after);
@@ -49,7 +52,7 @@ var setup = function (cb) {
     max_size: 2147483647,
     require_ssl: false
   });
-  buf = new mock.ColabBuffer(r, 0, "test.txt", new Buffer("abc"), undefined, true);
+  buf = new mock.buf.make_buffer(r, 0, "test.txt", "abc", undefined, true, "utf8");
   // Set this so the test doesn't hang for 90 seconds before exiting.
   buf.save_timeout = 1;
 
