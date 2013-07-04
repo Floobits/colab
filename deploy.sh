@@ -28,6 +28,7 @@ ssh $HOST "sudo cp /data/colab/lib/settings.js /data/releases/$RELEASE_NAME/lib/
 ssh $HOST "sudo cp -r /data/colab/node_modules /data/releases/$RELEASE_NAME/"
 ssh $HOST "cd /data/releases/$RELEASE_NAME && \
 sudo npm install && \
+sudo npm update && \
 sudo ln -s -f /data/releases/$RELEASE_NAME /data/colab-new && \
 sudo mv -T -f /data/colab-new /data/colab && \
 sudo sv restart /service/colab/"
