@@ -22,7 +22,7 @@ exports.socket_io_port = 8048;
 exports.socket_io_transports = ["websocket"];
 
 exports.max_buf_history = 15;
-exports.max_buf_len = 1000000; // 1MB
+exports.max_buf_len = 10000000; // 10MB
 
 exports.save_delay = 60000;
 

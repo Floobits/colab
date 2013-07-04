@@ -1,9 +1,11 @@
-git
 g++
+git
+libqt4-dev
 make
 mercurial
 msmtp
 nodejs
 npm
+pkg-config
 runit
 subversion
