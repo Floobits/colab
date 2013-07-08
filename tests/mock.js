@@ -11,6 +11,7 @@ var agent = require("agent");
 var buf = require("../lib/buffer");
 var log = require("log");
 var room = require("room");
+var perms = require("perms");
 var utils = require("utils");
 
 
@@ -47,7 +48,7 @@ var FakeAgentConnection = function (r, agent_id) {
   self.authenticated = true;
   self.user_id = -1;
   self.perms = [];
-  _.each(utils.db_perms_mapping, function (perms, codename) {
+  _.each(perms.db_perms_mapping, function (perms, codename) {
     self.perms = self.perms.concat(perms);
   });
   self.perms = _.uniq(self.perms);
