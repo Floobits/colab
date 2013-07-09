@@ -11,6 +11,9 @@ exports.db_info = {
   host: "127.0.0.1"
 };
 
+exports.conn_keepalive = 20000;
+exports.conn_timeout = 30000;
+
 exports.django_base_url = "https://floobits.com";
 exports.django_user = "";
 exports.django_pass = "";
