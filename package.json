@@ -10,6 +10,7 @@
   "dependencies": {
     "async": "0.2.x",
     "diff_match_patch": "0.1.x",
+    "express": "3.x",
     "knox": "0.8.x",
     "native-diff-match-patch": "0.0.x",
     "nodeunit": "0.8.x",
