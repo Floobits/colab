@@ -2,7 +2,7 @@
 var util = require("util");
 
 var DMP = require("native-diff-match-patch");
-var _ = require("underscore");
+var _ = require("lodash");
 
 var log = require("log");
 var room = require("room");

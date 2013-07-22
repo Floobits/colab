@@ -1,5 +1,5 @@
 /*global agent_id: true, r: true, agent1: true, agent2: true */
-var _ = require("underscore");
+var _ = require("lodash");
 
 var log = require("log");
 var mock = require("mock");

@@ -1,7 +1,7 @@
 var util = require("util");
 
 var async = require("async");
-var _ = require("underscore");
+var _ = require("lodash");
 
 var db = require("./db");
 var s3 = require("./s3");

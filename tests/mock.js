@@ -5,7 +5,7 @@ var util = require("util");
 
 var async = require("async");
 var DMP = require("native-diff-match-patch");
-var _ = require("underscore");
+var _ = require("lodash");
 
 var agent = require("agent");
 var buf = require("../lib/buffer");
