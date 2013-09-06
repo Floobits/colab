@@ -1,6 +1,6 @@
 {
-    "url": "https://floobits.com/r/Floobits/nodejs/",
     "hooks": {
         "*.js": "sv restart /service/colab"
-    }
+    }, 
+    "url": "https://floobits.com/r/Floobits/nodejs/"
 }
