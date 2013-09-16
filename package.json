@@ -21,7 +21,15 @@
     "optimist": "0.6.x",
     "pg": "2.x",
     "request": "2.x",
-    "socket.io": "0.9.x"
+    "socket.io": "0.9.x",
+    "carrier": ">= 0.0.3",
+    "bcrypt": ">= 0.4.0",
+    "winston": "0.6.1",
+    "commander": "git://github.com/visionmedia/commander.js.git"
+  },
+  "devDependencies": {
+    "mocha": "1.2.2",
+    "irc": "0.3.4"
   },
   "engines": {
     "node": ">=0.10.0"
