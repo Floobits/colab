@@ -1,0 +1,87 @@
+<pre>
+ ::::::::::..     .,-::::::::::::-.         ....:::::: .::::::. 
+ ;;;;;;;``;;;;  ,;;;'````' ;;,   `';,    ;;;;;;;;;````;;;`    ` 
+ [[[ [[[,/[[['  [[[        `[[     [[    ''`  `[[.    '[==/[[[[,
+ $$$ $$$$$$c    $$$         $$,    $$   ,,,    `$$      '''    $
+ 888 888b "88bo,`88bo,__,o, 888_,o8P'd8b888boood88     88b    dP
+ MMM MMMM   "W"   "YUMMMMMP"MMMMP"`  YMP"MMMMMMMM"      "YMmMY" 
+
+                                            A Node.JS IRC Server
+ ircd.js
+</pre>
+
+h3. About
+
+I'm implementing rfc1459/rfc2812 in "Node":http://nodejs.org/.
+
+The server will allow clients to connect, join channels, change topics; basic stuff.
+
+Done:
+
+* PASS (connection password)
+* PING/PONG
+* PRIVMSG
+* MODE
+* JOIN
+* TOPIC
+* NAMES
+* LIST
+* INVITE
+* WHOWAS
+* TIME
+* VERSION
+* AWAY
+* WHO
+* OPER
+* KICK
+* WALLOP
+* CONNECT
+* Connection garbage like MOTD
+* Basic data validation
+* Simple JSON config file
+* Channel modes: o, p, s, t, n, m, i, l, b, v, k
+* User modes: i, w, o
+
+Planned:
+
+* Services
+* Bring back server links
+* Server-to-server NICK messages when nicks are changed or new clients join
+* Server-to-server messages for JOIN, NJOIN, MODE, PRIVSG and NOTICE
+* SQUIT and QUIT for links
+* Server to server communication
+* More basic commands: NOTICE, MOTD, LINKS, TRACE, ADMIN, INFO
+* Log files and logging options
+* Local ops (+O)
+* Stats command
+* Add command line arguments for changing configuration path
+
+h3. Documentation
+
+Install with <code>npm install ircdjs</code>.
+
+Set up configuration in <code>/etc/ircdjs/config.json</code>.
+
+h3. Contributions
+
+* overra
+* jazzychad (Chad Etzel)
+* Sebastian A. Espindola (sespindola)
+* niklasf
+* treeform
+* guybrush (Patrick Pfeiffer)
+
+h3. License (GPL)
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see "http://www.gnu.org/licenses/":http://www.gnu.org/licenses/.
