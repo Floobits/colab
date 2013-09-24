@@ -1,0 +1,7 @@
+exports.log_level = "debug";
+
+exports.http_port = 80;
+
+exports.colab_servers = [
+  "127.0.0.1"
+];

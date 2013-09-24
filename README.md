@@ -19,3 +19,8 @@ control/db
 colab
   colab
     config files: settings.js
+
+
+TODO:
+move command_server stuff into colabcontrol (have django hit colabcontrol instead of colab)
+renaming workspace should make everyone join the new workspace url
