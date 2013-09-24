@@ -56,3 +56,25 @@ exports.readme = {
 };
 
 exports.repo_dir = "/var/cache/floobits/repos/"
+
+exports.irc = {
+  "network":  "Floobits",
+  "hostname": "localhost",
+  "serverDescription": "Floobits IRC daemon",
+  "serverName": "server1",
+  "port": 6667,
+  "linkPort": 7777,
+  "motd": "Message of the day",
+  "whoWasLimit": 10000,
+  "token": 1,
+  "opers": {
+  },
+  "channels": {
+    "channel1": { "topic": "First Channel" },
+    "channel2": { "topic": "Second Channel" }
+  },
+  "links": {
+  },
+  "pingTimeout": 120,
+  "maxNickLength": 50
+};
