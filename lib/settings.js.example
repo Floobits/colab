@@ -1,10 +1,15 @@
 exports.log_level = "debug";
 
 exports.http_port = 80;
-exports.metric_port = 8081;
+exports.https_port = 443;
 
 exports.colab_servers = [
-  "127.0.0.1"
+  {
+    ip: "127.0.0.1",
+    metrics_port: 8081,
+    colab_port: 3148,
+    ssl: false
+  }
 ];
 
 exports.poll_interval = 10000;
