@@ -2,4 +2,4 @@
 
 ulimit -n 65535
 
-exec node --max_executable_size=2048 --max-old-space-size=2048 --max-stack-size=4294967295 /data/colab/bin/colabcontroller 2>&1
+exec node --max_executable_size=2048 --max-old-space-size=2048 --max-stack-size=4294967295 /data/colabcontrol/bin/colabcontrol 2>&1

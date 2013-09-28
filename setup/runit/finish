@@ -1,11 +1,11 @@
 #!/bin/sh
 
 # Mail logs if we crashed
-echo 'Colabcontroller stopped'
+echo 'Colabcontrol stopped'
 if [ $1 -ne 0 ]
 then
   HOSTNAME=`hostname`
-  echo 'Fuuuuuuuck. Colabcontroller died!'
+  echo 'Fuuuuuuuck. Colabcontrol died!'
   (echo "Subject: Colabcontroller crashed on $HOSTNAME. Exit code $1\n"; tail -n 30 ./log/main/current; ) | msmtp "robomails@floobits.com"
   sleep 1
   exit $1

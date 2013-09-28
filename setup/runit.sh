@@ -1,11 +1,11 @@
 #!/bin/bash
 
-cp -r runit /etc/sv/colabcontroller
+cp -r runit /etc/sv/colabcontrol
 
-if [ ! -e /etc/service/colabcontroller ]
+if [ ! -e /etc/service/colabcontrol ]
 then
-    echo "/etc/service/colabcontroller doesn't exist. Creating it..."
-    ln -s /etc/sv/colabcontroller /etc/service/
+    echo "/etc/service/colabcontrol doesn't exist. Creating it..."
+    ln -s /etc/sv/colabcontrol /etc/service/
 fi
 
 if [ ! -e /service ]
@@ -14,9 +14,9 @@ then
     ln -s /etc/service /service
 fi
 
-if [ ! -e /etc/service/colabcontroller/log/main ]
+if [ ! -e /etc/service/colabcontrol/log/main ]
 then
-    echo "/etc/service/colabcontroller/log/main doesn't exist. Creating it..."
-    mkdir /etc/sv/colabcontroller/log/main
-    chown nobody:root /etc/sv/colabcontroller/log/main
+    echo "/etc/service/colabcontrol/log/main doesn't exist. Creating it..."
+    mkdir /etc/sv/colabcontrol/log/main
+    chown nobody:root /etc/sv/colabcontrol/log/main
 fi
