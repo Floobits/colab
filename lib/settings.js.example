@@ -1,3 +1,7 @@
+exports.ssl_cert = "";
+exports.ssl_key = "";
+//exports.ssl_ca = [""];
+
 exports.log_level = "debug";
 
 exports.http_port = 80;
