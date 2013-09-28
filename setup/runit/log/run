@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec chpst -unobody svlogd -tt ./main
