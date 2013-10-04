@@ -1,13 +1,13 @@
-var util = require('util');
+var util = require("util");
 
-var s3 = require('./s3');
+var s3 = require("./s3");
 
-var async = require('async');
+var async = require("async");
+var log = require("floorine");
 
-var db = require('./db');
-var log = require('./log');
+var db = require("./db");
 
-var upload = function(buffer, cb){
+var upload = function (buffer, cb) {
   var guid = util.format("%s-%s", buffer.room_id, buffer.fid);
   console.log(guid);
 
@@ -20,14 +20,14 @@ var upload = function(buffer, cb){
 
   req.on("response", function (res) {
     if (res.statusCode === 200) {
-      log.log('uproaded ' + guid);
+      log.log("uproaded " + guid);
       return cb();
     }
     log.error("error saving buf", guid, "to s3");
     return cb(" status code: " + res.statusCode + " " + guid + " " + buffer.cur_state.length + " " + buffer.cur_state);
   });
 
-  req.on('error', function(err){
+  req.on("error", function (err) {
     console.dir(err);
     return cb(err);
   });
@@ -36,16 +36,16 @@ var upload = function(buffer, cb){
 };
 
 async.auto({
-  db: function(cb) {
+  db: function (cb) {
     db.connect(cb);
   },
-  buffers: ['db', function(cb, res){
+  buffers: ["db", function (cb, res) {
     db.client.query("SELECT fid, room_id, cur_state FROM room_buffer;", [],cb);
   }],
-  upload: ['buffers', function(cb, res) {
+  upload: ["buffers", function (cb, res) {
     console.log(res.buffers.rows.length);
     async.eachLimit(res.buffer1.rows, 1, upload, cb);
   }]
-}, function(err) {
-  console.log(toString(err), 'bye');
+}, function (err) {
+  console.log(toString(err), "bye");
 });

@@ -11,6 +11,7 @@
     "async": "0.2.x",
     "diff_match_patch": "0.1.x",
     "express": "3.x",
+    "floorine": "0.x",
     "knox": "0.8.x",
     "lodash": "2.2.x",
     "mc": "1.x",
