@@ -10,6 +10,7 @@
   "dependencies": {
     "async": "0.2.x",
     "express": "3.x",
+    "floorine": "0.x",
     "lodash": "2.2.x",
     "nodeunit": "0.8.x",
     "request": "2.x"
