@@ -1,7 +1,7 @@
 /*global agent_id: true, r: true, agent1: true, agent2: true */
+var log = require("floorine");
 var _ = require("lodash");
 
-var log = require("log");
 var mock = require("mock");
 var test = require("test");
 
