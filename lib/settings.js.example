@@ -12,7 +12,9 @@ exports.colab_servers = [
     ip: "127.0.0.1",
     metrics_port: 8081,
     colab_port: 3148,
-    ssl: false
+    ssl: false,
+    name: "debug",
+    exclude: true
   }
 ];
 
