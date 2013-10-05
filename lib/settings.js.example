@@ -7,10 +7,16 @@ exports.log_level = "debug";
 exports.http_port = 80;
 exports.https_port = 443;
 
+exports.auth = {
+  username: "test",
+  password: "test"
+};
+
 exports.colab_servers = [
   {
     ip: "127.0.0.1",
     metrics_port: 8081,
+    command_port: 8443,
     colab_port: 3148,
     ssl: false,
     name: "debug",
