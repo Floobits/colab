@@ -11,7 +11,7 @@ exports.db_info = {
   host: "127.0.0.1"
 };
 
-exports.cache_servers = ["127.0.0.1"]
+exports.cache_servers = ["127.0.0.1:11211"]
 
 exports.conn_keepalive = 30000;
 exports.conn_timeout = 20 * 60 * 1000;
@@ -22,9 +22,6 @@ exports.django_pass = "";
 
 exports.json_port = 3148;
 //exports.json_port_ssl = 3448;
-exports.socket_io_port = 8048;
-//exports.socket_io_port_ssl = 8448;
-exports.socket_io_transports = ["websocket"];
 
 exports.metrics_port = 81;
 
