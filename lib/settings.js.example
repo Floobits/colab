@@ -14,7 +14,6 @@ exports.db_info = {
 exports.cache_servers = ["127.0.0.1:11211"]
 
 exports.conn_keepalive = 30000;
-exports.conn_timeout = 20 * 60 * 1000;
 
 exports.django_base_url = "https://floobits.com";
 exports.django_user = "";
