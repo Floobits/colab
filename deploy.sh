@@ -32,3 +32,5 @@ sudo npm update && \
 sudo ln -s -f /data/releases/$RELEASE_NAME /data/colabcontrol-new && \
 sudo mv -T -f /data/colabcontrol-new /data/colabcontrol && \
 sudo sv restart /service/colabcontrol/"
+
+curl -X POST http://$USER:$USER@dev00.floobits.com/colabcontrol/floobot/$HOST
