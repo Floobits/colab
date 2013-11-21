@@ -27,7 +27,7 @@ util.inherits(MockConn, events.EventEmitter);
 
 MockConn.prototype.write = function (name, data) {
   var self = this;
-  console.debug(self.agent.toString(), "name:", name, "data:", JSON.stringify(data, null, 2));
+  console.log(self.agent.toString(), "name:", name, "data:", JSON.stringify(data, null, 2));
 };
 
 
