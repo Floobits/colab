@@ -27,7 +27,7 @@ util.inherits(MockConn, events.EventEmitter);
 
 MockConn.prototype.write = function (name, data) {
   var self = this;
-//  console.log(self.agent.toString(), "name:", name, "data:", JSON.stringify(data, null, 2));
+  console.debug(self.agent.toString(), "name:", name, "data:", JSON.stringify(data, null, 2));
 };
 
 
@@ -48,7 +48,7 @@ var FakeAgentConnection = function (r, agent_id) {
   self.authenticated = true;
   self.user_id = -1;
   self.perms = [];
-  _.each(perms.db_perms_mapping, function (perms, codename) {
+  _.each(perms.db_perms_mapping, function (perms) {
     self.perms = self.perms.concat(perms);
   });
   self.perms = _.uniq(self.perms);
@@ -109,7 +109,7 @@ FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_afte
 
   result = DMP.patch_apply(patch_text, self.buf);
   if (utils.patched_cleanly(result) === false) {
-    log.error("Patch wasn't applied!", result);
+    log.error("Patch wasn't applied!", result, md5_before, md5_after);
     return;
   }
   log.log(self.toString(), "patched from", self.buf, "to", result[0]);
@@ -130,6 +130,7 @@ FakeAgentConnection.prototype.write = function (name, data) {
 
 
 buf.BaseBuffer.prototype.save = function (create, cb) {
+  log.debug("save create: %s", create);
   cb();
 };
 
