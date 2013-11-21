@@ -15,7 +15,6 @@
     "knox": "0.8.x",
     "lodash": "2.2.x",
     "mc": "1.x",
-    "mixpanel": ">=0.0.17",
     "mkdirp": "0.3.x",
     "native-diff-match-patch": "0.0.x",
     "nodeunit": "0.8.x",
