@@ -13,7 +13,7 @@
     "express": "3.x",
     "floorine": "0.x",
     "knox": "0.8.x",
-    "lodash": "2.2.x",
+    "lodash": "2.3.x",
     "mc": "1.x",
     "mixpanel": ">=0.0.17",
     "mkdirp": "0.3.x",
