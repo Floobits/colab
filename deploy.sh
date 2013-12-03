@@ -38,4 +38,10 @@ do
   sudo mv -T -f /data/colab-new /data/colab && \
   sudo sv restart /service/colab/"
 
+  if [ $? -eq 0 ]
+  then
+    curl -X POST http://$USER:$USER@dev00.floobits.com/deploy/colab/$HOST
+  else
+    echo "OMG DEPLOY FAILED"
+  fi
 done
