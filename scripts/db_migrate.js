@@ -41,7 +41,7 @@ var migrate_room = function (db_room, cb) {
         ws.on("close", function () {
           log.log("Closed db %s", room_path);
           ldb.close(function () {
-            process.nextTick(function () { cb(); });
+            process.nextTick(cb);
           });
         });
 
@@ -57,11 +57,10 @@ var migrate_room = function (db_room, cb) {
         _.each(result.rows, function (buf) {
           var buf_key,
             buf_obj;
-          buf_key = util.format("buf_%s", buf.id);
+          buf_key = util.format("buf_%s", buf.fid);
           buf_obj = {
-            id: buf.id,
+            id: buf.fid,
             path: buf.path,
-            fid: buf.fid,
             deleted: buf.deleted,
             md5: buf.md5,
             encoding: buf.encoding
