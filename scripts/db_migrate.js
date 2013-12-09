@@ -89,9 +89,15 @@ db.connect(function (err, result) {
       process.exit(1);
     }
 
-    async.eachLimit(result.rows, 1, function (db_room, cb) {
+    async.eachLimit(result.rows, 20, function (db_room, cb) {
       log.log("Migrating %s", db_room.id);
       migrate_room(db_room, cb);
+    }, function (err) {
+      if (err) {
+        log.error("Error: %s", err);
+      }
+      log.log("Migrated %s workspaces", result.rows.length);
+      process.exit(1);
     });
   });
 });
