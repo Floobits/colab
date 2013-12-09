@@ -8,12 +8,15 @@ var log = require("floorine");
 var db = require("./db");
 
 var upload = function (buffer, cb) {
-  var guid = util.format("%s-%s", buffer.room_id, buffer.fid);
+  var guid,
+    s3_client,
+    req;
+  guid = util.format("%s-%s", buffer.room_id, buffer.fid);
   console.log(guid);
 
-  var s3_client = s3.get_client();
+  s3_client = s3.get_client();
 
-  var req = s3_client.put(guid, {
+  req = s3_client.put(guid, {
     "Content-Length": buffer.cur_state.length,
     "Content-Type": "text/plain"
   });
@@ -39,13 +42,13 @@ async.auto({
   db: function (cb) {
     db.connect(cb);
   },
-  buffers: ["db", function (cb, res) {
-    db.client.query("SELECT fid, room_id, cur_state FROM room_buffer;", [],cb);
+  buffers: ["db", function (cb) {
+    db.client.query("SELECT fid, room_id, cur_state FROM room_buffer;", [], cb);
   }],
   upload: ["buffers", function (cb, res) {
     console.log(res.buffers.rows.length);
     async.eachLimit(res.buffer1.rows, 1, upload, cb);
   }]
 }, function (err) {
-  console.log(toString(err), "bye");
+  console.log(err.toString(), "bye");
 });

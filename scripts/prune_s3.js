@@ -12,7 +12,7 @@ async.auto({
   db: function (cb) {
     db.connect(cb);
   },
-  db_bufs: ["db", function (cb, res) {
+  db_bufs: ["db", function (cb) {
     db.client.query("SELECT fid, room_id FROM room_buffer WHERE deleted = FALSE;", [], cb);
   }],
   s3_bufs: ["db_bufs", function s3_get(cb, res, marker, contents) {
