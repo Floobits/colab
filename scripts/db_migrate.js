@@ -13,7 +13,7 @@ var settings = require("settings");
 
 var migrate_room = function (db_room, cb) {
   db.client.query("SELECT * FROM room_buffer WHERE room_id = $1 AND deleted = FALSE", [db_room.id], function (err, result) {
-    var nroom_path;
+    var room_path;
 
     room_path = path.normalize(path.join(settings.buf_storage.local.dir, db_room.id.toString(), "db"));
 
@@ -29,13 +29,32 @@ var migrate_room = function (db_room, cb) {
         return;
       }
       levelup(room_path, { valueEncoding: "json" }, function (err, ldb) {
+        var ws;
         if (err) {
           process.nextTick(function () { cb(err); });
           return;
         }
-        log.log("%s: migrating %s buffers", db_room.id, result.rows.length);
+        log.log("%s: migrating %s buffers", room_path, result.rows.length);
 
-        async.eachLimit(result.rows, 20, function (buf) {
+        ws = ldb.createWriteStream();
+
+        ws.on("close", function () {
+          log.log("Closed db %s", room_path);
+          ldb.close(function () {
+            process.nextTick(function () { cb(); });
+          });
+        });
+
+        ws.on("error", function (err) {
+          log.error("Error in db %s: %s", room_path, err);
+          if (!ldb.isClosed()) {
+            ldb.close(function () {
+              process.nextTick(function () { cb(err); });
+            });
+          }
+        });
+
+        _.each(result.rows, function (buf) {
           var buf_key,
             buf_obj;
           buf_key = util.format("buf_%s", buf.id);
@@ -47,9 +66,12 @@ var migrate_room = function (db_room, cb) {
             md5: buf.md5,
             encoding: buf.encoding
           };
-          ldb.put(buf_key, buf_obj);
+          ws.write({
+            key: buf_key,
+            value: buf_obj
+          });
         });
-        return ldb.close(cb);
+        ws.end();
       });
     });
   });
@@ -67,7 +89,7 @@ db.connect(function (err, result) {
       process.exit(1);
     }
 
-    async.eachLimit(result.rows, 20, function (db_room, cb) {
+    async.eachLimit(result.rows, 1, function (db_room, cb) {
       log.log("Migrating %s", db_room.id);
       migrate_room(db_room, cb);
     });
