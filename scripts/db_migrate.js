@@ -13,8 +13,7 @@ var settings = require("settings");
 
 var migrate_room = function (db_room, cb) {
   db.client.query("SELECT * FROM room_buffer WHERE room_id = $1 AND deleted = FALSE", [db_room.id], function (err, result) {
-    var ldb,
-      room_path;
+    var nroom_path;
 
     room_path = path.normalize(path.join(settings.buf_storage.local.dir, db_room.id.toString(), "db"));
 
@@ -29,25 +28,29 @@ var migrate_room = function (db_room, cb) {
         process.nextTick(function () { cb(err); });
         return;
       }
-      ldb = levelup(room_path, { valueEncoding: "json" });
+      levelup(room_path, { valueEncoding: "json" }, function (err, ldb) {
+        if (err) {
+          process.nextTick(function () { cb(err); });
+          return;
+        }
+        log.log("%s: migrating %s buffers", db_room.id, result.rows.length);
 
-      log.log("%s: migrating %s buffers", db_room.id, result.rows.length);
-
-      async.eachLimit(result.rows, 20, function (buf) {
-        var buf_key,
-          buf_obj;
-        buf_key = util.format("buf_%s", buf.id);
-        buf_obj = {
-          id: buf.id,
-          path: buf.path,
-          fid: buf.fid,
-          deleted: buf.deleted,
-          md5: buf.md5,
-          encoding: buf.encoding
-        };
-        ldb.put(buf_key, buf_obj);
+        async.eachLimit(result.rows, 20, function (buf) {
+          var buf_key,
+            buf_obj;
+          buf_key = util.format("buf_%s", buf.id);
+          buf_obj = {
+            id: buf.id,
+            path: buf.path,
+            fid: buf.fid,
+            deleted: buf.deleted,
+            md5: buf.md5,
+            encoding: buf.encoding
+          };
+          ldb.put(buf_key, buf_obj);
+        });
+        return ldb.close(cb);
       });
-      return ldb.close(cb);
     });
   });
 };
