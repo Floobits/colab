@@ -13,7 +13,7 @@ var settings = require("settings");
 
 
 var migrate_room = function (db_room, cb) {
-  db.client.query("SELECT * FROM room_buffer WHERE room_id = $1 AND deleted = FALSE", [db_room.id], function (err, result) {
+  db.query("SELECT * FROM room_buffer WHERE room_id = $1 AND deleted = FALSE", [db_room.id], function (err, result) {
     var db_path,
       room_path;
 
@@ -77,7 +77,13 @@ var migrate_room = function (db_room, cb) {
           buf_path = path.join(room_path, buf.fid.toString());
           // TODO: fetch from s3 if failure
           /*jslint stupid: true */
-          buf_content = fs.readFileSync(buf_path);
+          try {
+            buf_content = fs.readFileSync(buf_path);
+          } catch (e) {
+            log.error("Error reading %s: %s", buf_path, e);
+            process.exit(1);
+            // return;
+          }
           /*jslint stupid: false */
           db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary";
           ws.write({
@@ -92,29 +98,22 @@ var migrate_room = function (db_room, cb) {
   });
 };
 
-db.connect(function (err, result) {
+db.query("SELECT * FROM room_room", function (err, result) {
   if (err) {
-    log.error("Error connecting to postgres:", err, result);
+    log.error("error getting workspaces:", err);
     process.exit(1);
   }
 
-  db.client.query("SELECT * FROM room_room", function (err, result) {
+  // var rows = result.rows.slice(0, 20);
+
+  async.eachLimit(result.rows, 1, function (db_room, cb) {
+    log.log("Migrating %s", db_room.id);
+    migrate_room(db_room, cb);
+  }, function (err) {
     if (err) {
-      log.error("error getting workspaces:", err);
-      process.exit(1);
+      log.error("Error: %s", err);
     }
-
-    // var rows = result.rows.slice(0, 20);
-
-    async.eachLimit(result.rows, 1, function (db_room, cb) {
-      log.log("Migrating %s", db_room.id);
-      migrate_room(db_room, cb);
-    }, function (err) {
-      if (err) {
-        log.error("Error: %s", err);
-      }
-      log.log("Migrated %s workspaces", result.rows.length);
-      process.exit(1);
-    });
+    log.log("Migrated %s workspaces", result.rows.length);
+    process.exit(1);
   });
 });
