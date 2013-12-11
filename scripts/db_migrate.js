@@ -38,6 +38,23 @@ var load_s3 = function (key, cb) {
   req.end();
 };
 
+var bufs = {
+  failed: 0,
+  total: 0
+};
+
+var final_stats = function () {
+  var succeeded = (bufs.total - bufs.failed);
+  log.log("Migrated %s/%s buffers (%d%)", succeeded, bufs.total, (succeeded / bufs.total) * 100);
+  process.exit();
+};
+
+process.on("exit", final_stats);
+process.on("uncaughtException", final_stats);
+process.on("SIGINT", final_stats);
+process.on("SIGTERM", final_stats);
+
+
 var migrate_room = function (db_room, cb) {
   db.query("SELECT * FROM room_buffer WHERE room_id = $1 AND deleted = FALSE", [db_room.id], function (err, result) {
     var db_path,
@@ -63,7 +80,7 @@ var migrate_room = function (db_room, cb) {
           process.nextTick(function () { cb(err); });
           return;
         }
-        log.log("%s: migrating %s buffers", room_path, result.rows.length);
+        log.log("%s (%s): migrating %s buffers", db_room.name, room_path, result.rows.length);
 
         ws = ldb.createWriteStream();
 
@@ -100,6 +117,7 @@ var migrate_room = function (db_room, cb) {
             key: util.format("buf_%s", buf.fid),
             value: buf_obj
           });
+          bufs.total++;
 
           buf_path = path.join(room_path, buf.fid.toString());
           try {
@@ -112,9 +130,11 @@ var migrate_room = function (db_room, cb) {
             log.log("Fetching %s from s3.", s3_key);
             load_s3(s3_key, function (err, result) {
               if (err) {
-                log.error("Error reading %s from s3: %s", s3_key, e);
+                log.error("Error reading %s from s3: %s", s3_key, err);
                 // Die because otherwise there would be data loss.
-                process.exit(1);
+                // process.exit(1);
+                result = " ";
+                bufs.failed++;
               }
               db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary";
               ws.write({
