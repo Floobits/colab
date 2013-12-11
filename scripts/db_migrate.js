@@ -1,3 +1,4 @@
+var fs = require("fs");
 var path = require("path");
 var util = require("util");
 
@@ -13,9 +14,11 @@ var settings = require("settings");
 
 var migrate_room = function (db_room, cb) {
   db.client.query("SELECT * FROM room_buffer WHERE room_id = $1 AND deleted = FALSE", [db_room.id], function (err, result) {
-    var room_path;
+    var db_path,
+      room_path;
 
-    room_path = path.normalize(path.join(settings.buf_storage.local.dir, db_room.id.toString(), "db"));
+    room_path = path.normalize(path.join(settings.buf_storage.local.dir, db_room.id.toString()));
+    db_path = path.join(room_path, "db");
 
     if (err) {
       log.error("error getting buffers for room", db_room.id, err);
@@ -28,7 +31,7 @@ var migrate_room = function (db_room, cb) {
         process.nextTick(function () { cb(err); });
         return;
       }
-      levelup(room_path, { valueEncoding: "json" }, function (err, ldb) {
+      levelup(db_path, { valueEncoding: "json" }, function (err, ldb) {
         var ws;
         if (err) {
           process.nextTick(function () { cb(err); });
@@ -55,9 +58,10 @@ var migrate_room = function (db_room, cb) {
         });
 
         _.each(result.rows, function (buf) {
-          var buf_key,
-            buf_obj;
-          buf_key = util.format("buf_%s", buf.fid);
+          var buf_content,
+            buf_obj,
+            buf_path,
+            db_encoding;
           buf_obj = {
             id: buf.fid,
             path: buf.path,
@@ -66,8 +70,20 @@ var migrate_room = function (db_room, cb) {
             encoding: buf.encoding
           };
           ws.write({
-            key: buf_key,
+            key: util.format("buf_%s", buf.fid),
             value: buf_obj
+          });
+
+          buf_path = path.join(room_path, buf.fid.toString());
+          // TODO: fetch from s3 if failure
+          /*jslint stupid: true */
+          buf_content = fs.readFileSync(buf_path);
+          /*jslint stupid: false */
+          db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary";
+          ws.write({
+            key: util.format("buf_content_%s", buf.fid),
+            value: buf_content,
+            valueEncoding: db_encoding
           });
         });
         ws.end();
@@ -88,7 +104,9 @@ db.connect(function (err, result) {
       process.exit(1);
     }
 
-    async.eachLimit(result.rows, 20, function (db_room, cb) {
+    // var rows = result.rows.slice(0, 20);
+
+    async.eachLimit(result.rows, 1, function (db_room, cb) {
       log.log("Migrating %s", db_room.id);
       migrate_room(db_room, cb);
     }, function (err) {
