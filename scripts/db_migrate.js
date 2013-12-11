@@ -3,6 +3,7 @@ var path = require("path");
 var util = require("util");
 
 var async = require("async");
+var knox = require("knox");
 var log = require("floorine");
 var levelup = require("levelup");
 var mkdirp = require("mkdirp");
@@ -11,6 +12,31 @@ var _ = require("lodash");
 var db = require("db");
 var settings = require("settings");
 
+
+var s3_client = knox.createClient(settings.buf_storage.s3);
+
+var load_s3 = function (key, cb) {
+  var req = s3_client.get(key);
+
+  req.on("response", function (res) {
+    var data = "";
+    res.setEncoding("binary");
+    if (res.statusCode >= 400) {
+      return cb(util.format("Bad status code from S3: %s", res.statusCode));
+    }
+    res.on("data", function (chunk) {
+      data += chunk;
+    });
+    res.on("end", function () {
+      cb(null, data);
+    });
+    res.on("error", cb);
+  });
+  req.on("error", function (err, result) {
+    cb(err, result);
+  });
+  req.end();
+};
 
 var migrate_room = function (db_room, cb) {
   db.query("SELECT * FROM room_buffer WHERE room_id = $1 AND deleted = FALSE", [db_room.id], function (err, result) {
@@ -57,11 +83,12 @@ var migrate_room = function (db_room, cb) {
           }
         });
 
-        _.each(result.rows, function (buf) {
+        async.eachLimit(result.rows, 1, function (buf, cb) {
           var buf_content,
             buf_obj,
             buf_path,
-            db_encoding;
+            db_encoding,
+            s3_key;
           buf_obj = {
             id: buf.fid,
             path: buf.path,
@@ -75,24 +102,40 @@ var migrate_room = function (db_room, cb) {
           });
 
           buf_path = path.join(room_path, buf.fid.toString());
-          // TODO: fetch from s3 if failure
-          /*jslint stupid: true */
           try {
+            /*jslint stupid: true */
             buf_content = fs.readFileSync(buf_path);
+            /*jslint stupid: false */
           } catch (e) {
-            log.error("Error reading %s: %s", buf_path, e);
-            process.exit(1);
-            // return;
+            s3_key = util.format("%s/%s", db_room.id, buf.fid);
+            log.error("Error reading %s: %s.", buf_path, e);
+            log.log("Fetching %s from s3.", s3_key);
+            load_s3(s3_key, function (err, result) {
+              if (err) {
+                log.error("Error reading %s from s3: %s", s3_key, e);
+                // Die because otherwise there would be data loss.
+                process.exit(1);
+              }
+              db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary";
+              ws.write({
+                key: util.format("buf_content_%s", buf.fid),
+                value: result,
+                valueEncoding: db_encoding
+              });
+              cb();
+            });
+            return;
           }
-          /*jslint stupid: false */
           db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary";
           ws.write({
             key: util.format("buf_content_%s", buf.fid),
             value: buf_content,
             valueEncoding: db_encoding
           });
+          cb();
+        }, function () {
+          ws.end();
         });
-        ws.end();
       });
     });
   });
