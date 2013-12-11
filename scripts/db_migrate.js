@@ -38,14 +38,28 @@ var load_s3 = function (key, cb) {
   req.end();
 };
 
-var bufs = {
-  failed: 0,
-  total: 0
+var stats = {
+  bufs: {
+    failed: 0,
+    total: 0
+  },
+  workspaces: {
+    failed: 0,
+    total: 0
+  }
 };
 
-var final_stats = function () {
-  var succeeded = (bufs.total - bufs.failed);
-  log.log("Migrated %s/%s buffers (%d%)", succeeded, bufs.total, (succeeded / bufs.total) * 100);
+var final_stats = function (err) {
+  var succeeded = (stats.bufs.total - stats.bufs.failed);
+  if (err) {
+    console.error("Error:");
+    console.error(err);
+    console.error("Stack:");
+    console.error(err.stack);
+  }
+  log.log("Migrated %s/%s buffers (%d%)", succeeded, stats.bufs.total, (succeeded / stats.bufs.total) * 100);
+  succeeded = (stats.workspaces.total - stats.workspaces.failed);
+  log.log("Migrated %s/%s workspaces (%d%)", succeeded, stats.workspaces.total, (succeeded / stats.workspaces.total) * 100);
   process.exit();
 };
 
@@ -62,21 +76,25 @@ var migrate_room = function (db_room, cb) {
 
     room_path = path.normalize(path.join(settings.buf_storage.local.dir, db_room.id.toString()));
     db_path = path.join(room_path, "db");
+    stats.workspaces.total++;
 
     if (err) {
       log.error("error getting buffers for room", db_room.id, err);
+      stats.workspaces.failed++;
       process.nextTick(function () { cb(err, result); });
       return;
     }
 
     mkdirp(room_path, function (err) {
       if (err) {
+        stats.workspaces.failed++;
         process.nextTick(function () { cb(err); });
         return;
       }
       levelup(db_path, { valueEncoding: "json" }, function (err, ldb) {
         var ws;
         if (err) {
+          stats.workspaces.failed++;
           process.nextTick(function () { cb(err); });
           return;
         }
@@ -95,6 +113,7 @@ var migrate_room = function (db_room, cb) {
           log.error("Error in db %s: %s", room_path, err);
           if (!ldb.isClosed()) {
             ldb.close(function () {
+              stats.workspaces.failed++;
               process.nextTick(function () { cb(err); });
             });
           }
@@ -117,7 +136,7 @@ var migrate_room = function (db_room, cb) {
             key: util.format("buf_%s", buf.fid),
             value: buf_obj
           });
-          bufs.total++;
+          stats.bufs.total++;
 
           buf_path = path.join(room_path, buf.fid.toString());
           try {
@@ -131,10 +150,10 @@ var migrate_room = function (db_room, cb) {
             load_s3(s3_key, function (err, result) {
               if (err) {
                 log.error("Error reading %s from s3: %s", s3_key, err);
-                // Die because otherwise there would be data loss.
-                // process.exit(1);
-                result = " ";
-                bufs.failed++;
+                // TODO: save an empty buf or something?
+                stats.bufs.failed++;
+                cb();
+                return;
               }
               db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary";
               ws.write({
@@ -169,14 +188,14 @@ db.query("SELECT * FROM room_room", function (err, result) {
 
   // var rows = result.rows.slice(0, 20);
 
-  async.eachLimit(result.rows, 1, function (db_room, cb) {
+  async.eachLimit(result.rows, 5, function (db_room, cb) {
     log.log("Migrating %s", db_room.id);
     migrate_room(db_room, cb);
   }, function (err) {
     if (err) {
       log.error("Error: %s", err);
     }
-    log.log("Migrated %s workspaces", result.rows.length);
-    process.exit(1);
+    log.log("%s workspaces in DB", result.rows.length);
+    final_stats();
   });
 });
