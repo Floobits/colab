@@ -68,6 +68,14 @@ process.on("uncaughtException", final_stats);
 process.on("SIGINT", final_stats);
 process.on("SIGTERM", final_stats);
 
+var save_buf_content = function (ws, buf, value) {
+  var db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary";
+  ws.write({
+    key: util.format("buf_content_%s", buf.fid),
+    value: value,
+    valueEncoding: db_encoding
+  });
+};
 
 var migrate_room = function (db_room, cb) {
   db.query("SELECT * FROM room_buffer WHERE room_id = $1 AND deleted = FALSE", [db_room.id], function (err, result) {
@@ -123,7 +131,6 @@ var migrate_room = function (db_room, cb) {
           var buf_content,
             buf_obj,
             buf_path,
-            db_encoding,
             s3_key;
           buf_obj = {
             id: buf.fid,
@@ -155,22 +162,12 @@ var migrate_room = function (db_room, cb) {
                 cb();
                 return;
               }
-              db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary";
-              ws.write({
-                key: util.format("buf_content_%s", buf.fid),
-                value: result,
-                valueEncoding: db_encoding
-              });
+              save_buf_content(ws, buf, result);
               cb();
             });
             return;
           }
-          db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary";
-          ws.write({
-            key: util.format("buf_content_%s", buf.fid),
-            value: buf_content,
-            valueEncoding: db_encoding
-          });
+          save_buf_content(ws, buf, buf_content);
           cb();
         }, function () {
           ws.end();
