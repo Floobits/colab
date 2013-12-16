@@ -127,7 +127,7 @@ var migrate_room = function (db_room, cb) {
           }
         });
 
-        async.eachLimit(result.rows, 1, function (buf, cb) {
+        async.eachLimit(result.rows, 5, function (buf, cb) {
           var buf_content,
             buf_obj,
             buf_path,
@@ -169,7 +169,9 @@ var migrate_room = function (db_room, cb) {
           }
           save_buf_content(ws, buf, buf_content);
           cb();
-        }, ws.end);
+        }, function () {
+          ws.end();
+        });
       });
     });
   });
