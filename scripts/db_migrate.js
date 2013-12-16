@@ -70,11 +70,6 @@ process.on("SIGTERM", final_stats);
 
 var save_buf_content = function (ws, buf, value) {
   var db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary";
-  if (value.length === 0) {
-    // TODO: delete value, just to make sure
-    log.warn("Empty values are not allowed. Skipping. %s", buf.id);
-    return;
-  }
   ws.write({
     key: util.format("buf_content_%s", buf.fid),
     value: value,
@@ -162,7 +157,7 @@ var migrate_room = function (db_room, cb) {
             load_s3(s3_key, function (err, result) {
               if (err) {
                 log.error("Error reading %s from s3: %s", s3_key, err);
-                // TODO: save an empty buf or something?
+                save_buf_content(ws, buf, "");
                 stats.bufs.failed++;
                 cb();
                 return;
@@ -174,9 +169,7 @@ var migrate_room = function (db_room, cb) {
           }
           save_buf_content(ws, buf, buf_content);
           cb();
-        }, function () {
-          ws.end();
-        });
+        }, ws.end);
       });
     });
   });
@@ -187,8 +180,6 @@ db.query("SELECT * FROM room_room", function (err, result) {
     log.error("error getting workspaces:", err);
     process.exit(1);
   }
-
-  // var rows = result.rows.slice(0, 20);
 
   async.eachLimit(result.rows, 5, function (db_room, cb) {
     log.log("Migrating %s", db_room.id);
