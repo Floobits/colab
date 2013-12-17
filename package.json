@@ -15,7 +15,7 @@
     "knox": "0.8.x",
     "leveldown": "0.x",
     "levelup": "0.x",
-    "lodash": "2.3.x",
+    "lodash": "2.4.x",
     "mc": "1.x",
     "mixpanel": ">=0.0.17",
     "mkdirp": "0.3.x",
