@@ -127,8 +127,10 @@ var migrate_room = function (db_room, cb) {
           }
         });
 
+        // TODO: set workspace version based on # of hash matches
         async.eachLimit(result.rows, 5, function (buf, cb) {
           var buf_content,
+            buf_key = util.format("buf_%s", buf.fid),
             buf_obj,
             buf_path,
             s3_key;
@@ -152,7 +154,7 @@ var migrate_room = function (db_room, cb) {
             /*jslint stupid: false */
           } catch (e) {
             s3_key = util.format("%s/%s", db_room.id, buf.fid);
-            log.error("Error reading %s: %s.", buf_path, e);
+            log.info("Error reading %s: %s.", buf_path, e);
             log.log("Fetching %s from s3.", s3_key);
             load_s3(s3_key, function (err, result) {
               if (err) {
