@@ -12,7 +12,7 @@ var _ = require("lodash");
 var db = require("db");
 var settings = require("settings");
 
-
+log.set_log_level(settings.log_level);
 var s3_client = knox.createClient(settings.buf_storage.s3);
 
 var load_s3 = function (key, cb) {
@@ -134,6 +134,7 @@ var migrate_room = function (db_room, cb) {
             buf_obj,
             buf_path,
             s3_key;
+
           buf_obj = {
             id: buf.fid,
             path: buf.path,
@@ -141,36 +142,50 @@ var migrate_room = function (db_room, cb) {
             md5: buf.md5,
             encoding: buf.encoding
           };
-          ws.write({
-            key: util.format("buf_%s", buf.fid),
-            value: buf_obj
-          });
-          stats.bufs.total++;
 
-          buf_path = path.join(room_path, buf.fid.toString());
-          try {
-            /*jslint stupid: true */
-            buf_content = fs.readFileSync(buf_path);
-            /*jslint stupid: false */
-          } catch (e) {
-            s3_key = util.format("%s/%s", db_room.id, buf.fid);
-            log.info("Error reading %s: %s.", buf_path, e);
-            log.log("Fetching %s from s3.", s3_key);
-            load_s3(s3_key, function (err, result) {
-              if (err) {
-                log.error("Error reading %s from s3: %s", s3_key, err);
-                save_buf_content(ws, buf, "");
-                stats.bufs.failed++;
-                cb();
-                return;
-              }
-              save_buf_content(ws, buf, result);
+          // Try to fetch from leveldb and compare md5s
+          ldb.get(buf_key, function (err, result) {
+            if (err) {
+              log.error("Error fetching %s from leveldb: %s", buf_key, err);
+            } else if (buf.md5 === result.md5) {
+              // TODO: actually md5 the data
+              log.debug("%s md5 already matches.", buf_key);
+              stats.bufs.total++;
               cb();
+              return;
+            }
+
+            ws.write({
+              key: buf_key,
+              value: buf_obj
             });
-            return;
-          }
-          save_buf_content(ws, buf, buf_content);
-          cb();
+            stats.bufs.total++;
+
+            buf_path = path.join(room_path, buf.fid.toString());
+            try {
+              /*jslint stupid: true */
+              buf_content = fs.readFileSync(buf_path);
+              /*jslint stupid: false */
+            } catch (e) {
+              s3_key = util.format("%s/%s", db_room.id, buf.fid);
+              log.info("Error reading %s: %s.", buf_path, e);
+              log.log("Fetching %s from s3.", s3_key);
+              load_s3(s3_key, function (err, result) {
+                if (err) {
+                  log.error("Error reading %s from s3: %s", s3_key, err);
+                  save_buf_content(ws, buf, "");
+                  stats.bufs.failed++;
+                  cb();
+                  return;
+                }
+                save_buf_content(ws, buf, result);
+                cb();
+              });
+              return;
+            }
+            save_buf_content(ws, buf, buf_content);
+            cb();
+          });
         }, function () {
           ws.end();
         });
