@@ -11,6 +11,7 @@ var _ = require("lodash");
 
 var db = require("db");
 var settings = require("settings");
+var utils = require("utils");
 
 log.set_log_level(settings.log_level);
 var s3_client = knox.createClient(settings.buf_storage.s3);
@@ -129,10 +130,12 @@ var migrate_room = function (db_room, cb) {
         });
 
         async.eachLimit(result.rows, 5, function (buf, cb) {
-          var buf_content,
+          var auto,
             buf_key = util.format("buf_%s", buf.fid),
+            buf_content_key = util.format("buf_content_%s", buf.fid),
             buf_obj,
             buf_path,
+            db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary",
             s3_key;
 
           buf_obj = {
@@ -143,48 +146,74 @@ var migrate_room = function (db_room, cb) {
             encoding: buf.encoding
           };
 
-          // Try to fetch from leveldb and compare md5s
-          ldb.get(buf_key, function (err, result) {
-            if (err) {
-              log.error("Error fetching %s from leveldb: %s", buf_key, err);
-            } else if (buf.md5 === result.md5) {
-              // TODO: actually md5 the data
-              log.debug("%s md5 already matches.", buf_key);
-              checksum_matches++;
-              stats.bufs.total++;
-              cb();
-              return;
-            }
+          stats.bufs.total++;
 
+          auto = {};
+
+          auto.buf_get = function (cb) {
+            ldb.get(buf_key, cb);
+          };
+          auto.buf_content_get = function (cb) {
+            ldb.get(buf_content_key, { valueEncoding: db_encoding }, cb);
+          };
+          auto.verify_buf = ["buf_get", "buf_content_get", function (cb, response) {
+            var buf_md5;
+            if (buf.md5 === response.buf_get.md5) {
+              if (_.isUndefined(response.buf_content_get)) {
+                log.warn("No data in buffer %s! Setting to empty.", buf.fid);
+                response.buf_content_get = new Buffer("", db_encoding);
+              }
+              buf_md5 = utils.md5(response.buf_content_get);
+              if (buf_md5 === buf.md5) {
+                checksum_matches++;
+                return cb(null, true);
+              }
+              log.warn("MD5 mismatch when loading %s! Was %s. Should be %s.", buf.fid, buf_md5, buf.md5);
+            }
+            return cb(null, false);
+          }];
+
+          auto.read_buf = ["verify_buf", function (cb, response) {
+            if (response.verify_buf) {
+              return cb();
+            }
             ws.write({
               key: buf_key,
               value: buf_obj
             });
-            stats.bufs.total++;
-
             buf_path = path.join(room_path, buf.fid.toString());
-            try {
-              /*jslint stupid: true */
-              buf_content = fs.readFileSync(buf_path);
-              /*jslint stupid: false */
-            } catch (e) {
-              s3_key = util.format("%s/%s", db_room.id, buf.fid);
-              log.info("Error reading %s: %s.", buf_path, e);
-              log.log("Fetching %s from s3.", s3_key);
-              load_s3(s3_key, function (err, result) {
-                if (err) {
-                  log.error("Error reading %s from s3: %s", s3_key, err);
-                  save_buf_content(ws, buf, "");
-                  stats.bufs.failed++;
-                  cb();
-                  return;
-                }
-                save_buf_content(ws, buf, result);
-                cb();
-              });
-              return;
+            fs.readFile(buf_path, function (err, result) {
+              if (err) {
+                log.info("Error reading %s: %s.", buf_path, err);
+                return cb(null, false);
+              }
+              save_buf_content(ws, buf, result);
+              return cb(null, true);
+            });
+          }];
+
+          auto.read_s3 = ["read_buf", function (cb, response) {
+            if (response.read_buf || response.verify_buf) {
+              return cb();
             }
-            save_buf_content(ws, buf, buf_content);
+            s3_key = util.format("%s/%s", db_room.id, buf.fid);
+            log.log("Fetching %s from s3.", s3_key);
+            load_s3(s3_key, function (err, result) {
+              if (err) {
+                log.error("Error reading %s from s3: %s", s3_key, err);
+                save_buf_content(ws, buf, "");
+                cb(err);
+                return;
+              }
+              save_buf_content(ws, buf, result);
+              cb();
+            });
+          }];
+
+          async.auto(auto, function (err) {
+            if (err) {
+              stats.bufs.failed++;
+            }
             cb();
           });
         }, function () {
