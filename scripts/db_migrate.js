@@ -79,7 +79,8 @@ var save_buf_content = function (ws, buf, value) {
 
 var migrate_room = function (db_room, cb) {
   db.query("SELECT * FROM room_buffer WHERE room_id = $1 AND deleted = FALSE", [db_room.id], function (err, result) {
-    var db_path,
+    var checksum_matches = 0,
+      db_path,
       room_path;
 
     room_path = path.normalize(path.join(settings.buf_storage.local.dir, db_room.id.toString()));
@@ -127,7 +128,6 @@ var migrate_room = function (db_room, cb) {
           }
         });
 
-        // TODO: set workspace version based on # of hash matches
         async.eachLimit(result.rows, 5, function (buf, cb) {
           var buf_content,
             buf_key = util.format("buf_%s", buf.fid),
@@ -150,6 +150,7 @@ var migrate_room = function (db_room, cb) {
             } else if (buf.md5 === result.md5) {
               // TODO: actually md5 the data
               log.debug("%s md5 already matches.", buf_key);
+              checksum_matches++;
               stats.bufs.total++;
               cb();
               return;
@@ -187,6 +188,10 @@ var migrate_room = function (db_room, cb) {
             cb();
           });
         }, function () {
+          ws.write({
+            key: "version",
+            value: checksum_matches
+          });
           ws.end();
         });
       });
