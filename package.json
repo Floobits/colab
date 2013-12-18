@@ -13,7 +13,7 @@
     "express": "3.x",
     "floorine": "0.x",
     "knox": "0.8.x",
-    "leveldown": "0.x",
+    "leveldown": "https://github.com/ggreer/node-leveldown/archive/allow_empty_values.tar.gz",
     "levelup": "0.x",
     "lodash": "2.4.x",
     "mc": "1.x",
