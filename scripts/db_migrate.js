@@ -14,7 +14,8 @@ var settings = require("settings");
 var utils = require("utils");
 
 log.set_log_level(settings.log_level);
-var s3_client = knox.createClient(settings.buf_storage.s3);
+var s3_client = knox.createClient(settings.s3);
+
 
 var load_s3 = function (key, cb) {
   var req = s3_client.get(key);
@@ -89,7 +90,7 @@ var migrate_room = function (db_room, cb) {
       db_path,
       room_path;
 
-    room_path = path.normalize(path.join(settings.buf_storage.local.dir, db_room.id.toString()));
+    room_path = path.normalize(path.join(settings.base_dir, "bufs", db_room.id.toString()));
     db_path = path.join(room_path, "db");
     stats.workspaces.total++;
 
