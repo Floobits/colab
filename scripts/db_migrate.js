@@ -84,7 +84,7 @@ var save_buf_content = function (ws, buf, value) {
   });
 };
 
-var migrate_room = function (db_room, cb) {
+var migrate_room = function (server_db, db_room, cb) {
   db.query("SELECT * FROM room_buffer WHERE room_id = $1 AND deleted = FALSE", [db_room.id], function (err, result) {
     var checksum_matches = 0,
       db_path,
@@ -237,10 +237,7 @@ var migrate_room = function (db_room, cb) {
             cb();
           });
         }, function () {
-          ws.write({
-            key: "version",
-            value: checksum_matches
-          });
+          server_db.put(util.format("version_%s", db_room.id), checksum_matches);
           ws.end();
         });
       });
@@ -248,22 +245,32 @@ var migrate_room = function (db_room, cb) {
   });
 };
 
-db.query("SELECT * FROM room_room", function (err, result) {
+var auto = {};
+
+auto.levelup = function (cb) {
+  return levelup(path.join(settings.base_dir, "server_db"), cb);
+};
+
+auto.rooms = function (cb) {
+  return db.query("SELECT * FROM room_room", cb);
+};
+
+async.auto(auto, function (err, result) {
   if (err) {
     log.error("error getting workspaces:", err);
     process.exit(1);
   }
 
-  async.eachLimit(result.rows, 5, function (db_room, cb) {
+  async.eachLimit(result.rooms.rows, 5, function (db_room, cb) {
     log.debug("Migrating %s", db_room.id);
-    migrate_room(db_room, cb);
+    migrate_room(result.levelup, db_room, cb);
   }, function (err) {
     console.log("\n");
     if (err) {
       log.error("Error: %s", err);
     }
     console.log("\n");
-    log.log("%s workspaces in DB", result.rows.length);
+    log.log("%s workspaces in DB", result.rooms.rows.length);
     final_stats();
   });
 });
