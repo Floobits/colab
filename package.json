@@ -12,6 +12,7 @@
     "diff_match_patch": "0.1.x",
     "express": "3.x",
     "floorine": "0.x",
+    "fs-extra": "0.8.x",
     "knox": "0.8.x",
     "leveldown": "https://github.com/ggreer/node-leveldown/archive/allow_empty_values.tar.gz",
     "levelup": "0.x",
