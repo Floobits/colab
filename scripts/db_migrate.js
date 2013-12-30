@@ -13,11 +13,21 @@ var db = require("db");
 var settings = require("settings");
 var utils = require("utils");
 
+var s3_client;
+
 log.set_log_level(settings.log_level);
-var s3_client = knox.createClient(settings.s3);
+
+if (settings.s3) {
+  s3_client = knox.createClient(settings.s3);
+} else {
+  log.warn("No S3 settings! Only migrating local data.");
+}
 
 
 var load_s3 = function (key, cb) {
+  if (!s3_client) {
+    return cb("s3 disabled");
+  }
   var req = s3_client.get(key);
 
   req.on("response", function (res) {
