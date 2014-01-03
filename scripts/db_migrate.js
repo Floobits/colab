@@ -1,12 +1,11 @@
-var fs = require("fs");
 var path = require("path");
 var util = require("util");
 
 var async = require("async");
+var fs = require("fs-extra");
 var knox = require("knox");
 var log = require("floorine");
 var levelup = require("levelup");
-var mkdirp = require("mkdirp");
 var _ = require("lodash");
 
 var db = require("db");
@@ -111,7 +110,7 @@ var migrate_room = function (server_db, db_room, cb) {
       return;
     }
 
-    mkdirp(room_path, function (err) {
+    fs.mkdirs(room_path, function (err) {
       if (err) {
         stats.workspaces.failed++;
         process.nextTick(function () { cb(err); });
