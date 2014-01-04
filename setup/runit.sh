@@ -13,3 +13,9 @@ then
     echo "/service doesn't exist. Creating it..."
     ln -s /etc/service /service
 fi
+
+if [ ! -e /service/colab/log/main ]
+then
+    echo "/service/colab/log/main doesn't exist. Creating it..."
+	mkdir -p /service/colab/log/main && sudo chown nobody: /service/colab/log/main
+fi
