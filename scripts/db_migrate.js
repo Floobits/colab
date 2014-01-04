@@ -193,7 +193,6 @@ var migrate_room = function (server_db, db_room, cb) {
               }
               buf_md5 = utils.md5(response.buf_content_get);
               if (buf_md5 === buf.md5) {
-                checksum_matches++;
                 return cb(null, true);
               }
               if (buf.md5 === null || response.buf_content_get === "") {
@@ -235,6 +234,7 @@ var migrate_room = function (server_db, db_room, cb) {
 
           auto.read_s3 = ["read_buf", function (cb, response) {
             if (response.read_buf || response.verify_buf) {
+              checksum_matches++;
               return cb();
             }
             s3_key = util.format("%s/%s", db_room.id, buf.fid);
