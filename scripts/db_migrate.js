@@ -106,21 +106,21 @@ var migrate_room = function (server_db, db_room, cb) {
     if (err) {
       log.error("error getting buffers for room", db_room.id, err);
       stats.workspaces.failed++;
-      process.nextTick(function () { cb(err, result); });
+      setImmediate(function () { cb(err, result); });
       return;
     }
 
     fs.mkdirs(room_path, function (err) {
       if (err) {
         stats.workspaces.failed++;
-        process.nextTick(function () { cb(err); });
+        setImmediate(function () { cb(err); });
         return;
       }
       levelup(db_path, { valueEncoding: "json" }, function (err, ldb) {
         var ws;
         if (err) {
           stats.workspaces.failed++;
-          process.nextTick(function () { cb(err); });
+          setImmediate(function () { cb(err); });
           return;
         }
         log.log("%s (%s): migrating %s buffers", db_room.name, room_path, result.rows.length);
@@ -130,7 +130,7 @@ var migrate_room = function (server_db, db_room, cb) {
         ws.on("close", function () {
           log.log("Closed db %s", room_path);
           ldb.close(function () {
-            process.nextTick(cb);
+            setImmediate(cb);
           });
         });
 
@@ -139,7 +139,7 @@ var migrate_room = function (server_db, db_room, cb) {
           if (!ldb.isClosed()) {
             ldb.close(function () {
               stats.workspaces.failed++;
-              process.nextTick(function () { cb(err); });
+              setImmediate(function () { cb(err); });
             });
           }
         });
@@ -166,13 +166,26 @@ var migrate_room = function (server_db, db_room, cb) {
           auto = {};
 
           auto.buf_get = function (cb) {
-            ldb.get(buf_key, cb);
+            ldb.get(buf_key, function (err, result) {
+              if (err && err.type !== "NotFoundError") {
+                return cb(err, result);
+              }
+              return cb(null, result);
+            });
           };
           auto.buf_content_get = function (cb) {
-            ldb.get(buf_content_key, { valueEncoding: db_encoding }, cb);
+            ldb.get(buf_content_key, { valueEncoding: db_encoding }, function (err, result) {
+              if (err && err.type !== "NotFoundError") {
+                return cb(err, result);
+              }
+              return cb(null, result);
+            });
           };
           auto.verify_buf = ["buf_get", "buf_content_get", function (cb, response) {
             var buf_md5;
+            if (!response.buf_get) {
+              return cb(null, false);
+            }
             if (buf.md5 === response.buf_get.md5) {
               if (_.isUndefined(response.buf_content_get)) {
                 log.warn("No data in buffer %s! Setting to empty.", buf.fid);
@@ -207,12 +220,12 @@ var migrate_room = function (server_db, db_room, cb) {
                 log.info("Error reading %s: %s.", buf_path, err);
                 return cb(null, false);
               }
-              buf_md5 = utils.md5(response.buf_content_get);
+              buf_md5 = utils.md5(result);
               if (buf_md5 === buf.md5) {
                 save_buf_content(ws, buf, result);
                 return cb(null, true);
               }
-              if (buf.md5 === null || response.buf_content_get === "") {
+              if (buf.md5 === null || result === "") {
                 return cb(null, false);
               }
               log.error("MD5 mismatch when loading off disk %s! Was %s. Should be %s.", buf.fid, buf_md5, buf.md5);
@@ -266,7 +279,7 @@ auto.rooms = function (cb) {
 
 async.auto(auto, function (err, result) {
   if (err) {
-    log.error("error getting workspaces:", err);
+    log.error("Error getting workspaces: %s", err.toString());
     process.exit(1);
   }
 
