@@ -32,3 +32,5 @@ exports.colab_servers = [
 ];
 
 exports.poll_interval = 10000;
+exports.colab_error_threshold = 3;
+exports.repcount = 3;
