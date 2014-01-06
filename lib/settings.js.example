@@ -35,20 +35,10 @@ exports.max_buf_len = 10000000; // 10MB
 
 exports.save_delay = 120000;
 
-exports.buf_storage = {
-  local: {
-    dir: ""
-  },
-  s3: {
-    bucket: "",
-    key: "",
-    secret: ""
-  }
-};
+exports.base_dir = "/mnt/floobits";
+exports.s3 = {};
 
 exports.readme = {
   name: "FLOOBITS_README.md",
   text: "# Welcome to Floobits!\n\nIt looks like you're in an empty workspace. If you're using the web editor, you can \nclick on the menu in the upper left to upload or create files.\n\nIf you're using a native editor, you might want to read our help docs at \nhttps://floobits.com/help/plugins/\n"
 };
-
-exports.repo_dir = "/var/cache/floobits/repos/"
