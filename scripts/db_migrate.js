@@ -7,6 +7,9 @@ var knox = require("knox");
 var log = require("floorine");
 var levelup = require("levelup");
 var _ = require("lodash");
+var DMP = require("native-diff-match-patch");
+var diff_match_patch = require('diff_match_patch');
+var JS_DMP = new diff_match_patch.diff_match_patch();
 
 var db = require("db");
 var settings = require("settings");
@@ -24,9 +27,6 @@ if (settings.s3) {
 
 
 var load_s3 = function (key, cb) {
-  if (!s3_client) {
-    return cb("s3 disabled");
-  }
   var req = s3_client.get(key);
 
   req.on("response", function (res) {
@@ -128,7 +128,7 @@ var migrate_room = function (server_db, db_room, cb) {
         ws = ldb.createWriteStream();
 
         ws.on("close", function () {
-          log.log("Closed db %s", room_path);
+          log.debug("Closed db %s", room_path);
           ldb.close(function () {
             setImmediate(cb);
           });
@@ -158,7 +158,7 @@ var migrate_room = function (server_db, db_room, cb) {
             path: buf.path,
             deleted: buf.deleted,
             md5: buf.md5,
-            encoding: parseInt(buf.encoding, 10)
+            encoding: buf.encoding
           };
 
           stats.bufs.total++;
@@ -173,6 +173,7 @@ var migrate_room = function (server_db, db_room, cb) {
               return cb(null, result);
             });
           };
+
           auto.buf_content_get = function (cb) {
             ldb.get(buf_content_key, { valueEncoding: db_encoding }, function (err, result) {
               if (err && err.type !== "NotFoundError") {
@@ -181,6 +182,7 @@ var migrate_room = function (server_db, db_room, cb) {
               return cb(null, result);
             });
           };
+
           auto.verify_buf = ["buf_get", "buf_content_get", function (cb, response) {
             var buf_md5;
             if (!response.buf_get) {
@@ -198,7 +200,8 @@ var migrate_room = function (server_db, db_room, cb) {
               if (buf.md5 === null || response.buf_content_get === "") {
                 return cb(null, false);
               }
-              log.warn("MD5 mismatch when loading %s! Was %s. Should be %s.", buf.fid, buf_md5, buf.md5);
+              log.warn("MD5 mismatch when loading %s (%s)! Was %s. Should be %s.", buf.fid, buf.path, buf_md5, buf.md5);
+              // log.warn("Buf encoding: %s. Leveldb encoding: %s.", buf.encoding, db_encoding);
               stats.bufs.bad_checksum++;
             }
             return cb(null, false);
@@ -214,20 +217,44 @@ var migrate_room = function (server_db, db_room, cb) {
             });
             buf_path = path.join(room_path, buf.fid.toString());
             fs.readFile(buf_path, function (err, result) {
-              var buf_md5;
+              var buf_md5,
+                patches;
               if (err) {
                 log.info("Error reading %s: %s.", buf_path, err);
                 return cb(null, false);
               }
+              if (db_encoding === "utf8") {
+                buf_md5 = utils.md5(result);
+                // patches = DMP.patch_make(result, response.buf_content_get);
+                result = result.toString(db_encoding);
+                if (buf_md5 !== utils.md5(result)) {
+                  log.error("md5sum changed from %s to %s because of encoding %s", buf_md5, utils.md5(result), db_encoding);
+                  // log.log("START DIFF");
+                  // _.each(patches, function (patch) {
+                  //   log.log(patch.toString());
+                  // });
+                  // log.log("END DIFF");
+                }
+              }
               buf_md5 = utils.md5(result);
               if (buf_md5 === buf.md5) {
                 save_buf_content(ws, buf, result);
+                if (response.buf_content_get) {
+                  log.warn("lengths: db: %s file: %s", _.size(response.buf_content_get), _.size(result));
+                }
+                return cb(null, true);
+              }
+              if (buf_md5 === utils.md5(response.buf_content_get)) {
+                log.warn("File and leveldb agree, but postgres doesn't.");
                 return cb(null, true);
               }
               if (buf.md5 === null || result === "") {
                 return cb(null, false);
               }
-              log.error("MD5 mismatch when loading off disk %s! Was %s. Should be %s.", buf.fid, buf_md5, buf.md5);
+              log.error("MD5 mismatch when loading %s %s off disk! Was %s. Should be %s.", buf.fid, buf.path, buf_md5, buf.md5);
+              if (response.buf_content_get) {
+                log.warn("lengths: db: %s file: %s", _.size(response.buf_content_get), _.size(result));
+              }
               return cb(null, false);
             });
           }];
@@ -237,18 +264,21 @@ var migrate_room = function (server_db, db_room, cb) {
               checksum_matches++;
               return cb();
             }
+            if (!s3_client) {
+              stats.bufs.empty++;
+              return cb();
+            }
             s3_key = util.format("%s/%s", db_room.id, buf.fid);
-            log.log("Fetching %s from s3.", s3_key);
+            log.debug("Fetching %s from s3.", s3_key);
             load_s3(s3_key, function (err, result) {
               if (err) {
                 log.error("Error reading %s from s3: %s", s3_key, err);
                 stats.bufs.empty++;
                 save_buf_content(ws, buf, "");
-                cb(err);
-                return;
+              } else {
+                save_buf_content(ws, buf, result);
               }
-              save_buf_content(ws, buf, result);
-              cb();
+              cb(err);
             });
           }];
 
@@ -258,9 +288,17 @@ var migrate_room = function (server_db, db_room, cb) {
             }
             cb();
           });
-        }, function () {
-          server_db.put(util.format("version_%s", db_room.id), checksum_matches);
-          ws.end();
+        }, function (err) {
+          var version_key = util.format("version_%s", db_room.id);
+          if (err) {
+            server_db.put(version_key, -1, function () {
+              ws.end();
+            });
+          } else {
+            server_db.put(version_key, checksum_matches, function () {
+              ws.end();
+            });
+          }
         });
       });
     });
