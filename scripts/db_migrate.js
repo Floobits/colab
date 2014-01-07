@@ -244,7 +244,7 @@ var migrate_room = function (server_db, db_room, cb) {
                 }
                 return cb(null, true);
               }
-              if (buf_md5 === utils.md5(response.buf_content_get)) {
+              if (response.buf_content_get && buf_md5 === utils.md5(response.buf_content_get)) {
                 log.warn("File and leveldb agree, but postgres doesn't.");
                 return cb(null, true);
               }
