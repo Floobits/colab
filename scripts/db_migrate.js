@@ -266,6 +266,7 @@ var migrate_room = function (server_db, db_room, cb) {
             }
             if (!s3_client) {
               stats.bufs.empty++;
+              save_buf_content(ws, buf, "");
               return cb();
             }
             s3_key = util.format("%s/%s", db_room.id, buf.fid);
