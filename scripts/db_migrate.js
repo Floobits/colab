@@ -191,7 +191,7 @@ var migrate_room = function (server_db, db_room, cb) {
             if (buf.md5 === response.buf_get.md5) {
               if (_.isUndefined(response.buf_content_get)) {
                 log.warn("No data in buffer %s! Setting to empty.", buf.fid);
-                response.buf_content_get = new Buffer("", db_encoding);
+                response.buf_content_get = new Buffer(0);
               }
               buf_md5 = utils.md5(response.buf_content_get);
               if (buf_md5 === buf.md5) {
