@@ -14,7 +14,7 @@
     "floorine": "0.x",
     "fs-extra": "0.8.x",
     "knox": "0.8.x",
-    "leveldown": "https://github.com/ggreer/node-leveldown/archive/free_options.tar.gz",
+    "leveldown": "https://github.com/ggreer/node-leveldown/archive/dont_leak_options_attrs.tar.gz",
     "levelup": "0.x",
     "lodash": "2.x",
     "mc": "1.x",
