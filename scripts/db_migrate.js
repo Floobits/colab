@@ -85,11 +85,13 @@ process.on("SIGINT", final_stats);
 process.on("SIGTERM", final_stats);
 
 var save_buf_content = function (ws, buf, value) {
-  var db_encoding = db.buf_encodings_mapping[buf.encoding] === "utf8" ? "utf8" : "binary";
+  if (value.length === 0) {
+    return;
+  }
   ws.write({
     key: util.format("buf_content_%s", buf.fid),
     value: value,
-    valueEncoding: db_encoding
+    valueEncoding: "binary"
   });
 };
 
