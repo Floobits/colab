@@ -100,12 +100,13 @@ var migrate_room = function (server_db, db_room, cb) {
     room_path = path.normalize(path.join(settings.base_dir, "bufs", db_room.id.toString())),
     db_path = path.join(room_path, "db");
 
+  stats.workspaces.total++;
+
   auto.db_bufs = function (cb) {
     db.query("SELECT * FROM room_buffer WHERE room_id = $1 AND deleted = FALSE", [db_room.id], cb);
   };
 
   auto.mkdir = function (cb) {
-    stats.workspaces.total++;
     fs.mkdirs(room_path, cb);
   };
 
@@ -126,9 +127,7 @@ var migrate_room = function (server_db, db_room, cb) {
     ws.on("close", function () {
       log.debug("Closed db %s", room_path);
       ldb.close(function () {
-        setImmediate(function () {
-          cb(null, checksum_matches);
-        });
+        cb(null, checksum_matches);
       });
     });
 
@@ -136,19 +135,17 @@ var migrate_room = function (server_db, db_room, cb) {
       log.error("Error in db %s: %s", room_path, err);
       if (!ldb.isClosed()) {
         ldb.close(function () {
-          stats.workspaces.failed++;
-          setImmediate(function () { cb(err); });
+          cb(err);
         });
       }
     });
 
-    async.eachLimit(db_bufs.rows, 5, function (buf, cb) {
+    async.eachLimit(db_bufs.rows, 1, function (buf, cb) {
       var buf_auto,
         buf_key = util.format("buf_%s", buf.fid),
         buf_content_key = util.format("buf_content_%s", buf.fid),
         buf_obj,
-        buf_path,
-        s3_key;
+        buf_path;
 
       buf_obj = {
         id: buf.fid,
@@ -243,6 +240,7 @@ var migrate_room = function (server_db, db_room, cb) {
       }];
 
       buf_auto.read_s3 = ["read_buf", function (cb, response) {
+        var s3_key;
         if (response.read_buf || response.verify_buf) {
           checksum_matches++;
           return cb();
@@ -290,9 +288,8 @@ var migrate_room = function (server_db, db_room, cb) {
     if (err) {
       log.error("error getting buffers for room", db_room.id, err);
       stats.workspaces.failed++;
-      setImmediate(function () { cb(err, result); });
-      return;
     }
+    return cb(err, result);
   });
 };
 
@@ -312,7 +309,7 @@ async.auto(auto, function (err, result) {
     process.exit(1);
   }
 
-  async.eachLimit(result.rooms.rows, 5, function (db_room, cb) {
+  async.eachLimit(result.rooms.rows, 1, function (db_room, cb) {
     log.debug("Migrating %s", db_room.id);
     migrate_room(result.levelup, db_room, cb);
   }, function (err) {
