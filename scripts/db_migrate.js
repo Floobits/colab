@@ -140,7 +140,7 @@ var migrate_room = function (server_db, db_room, cb) {
       }
     });
 
-    async.eachLimit(db_bufs.rows, 1, function (buf, cb) {
+    async.eachLimit(db_bufs.rows, 5, function (buf, cb) {
       var buf_auto,
         buf_key = util.format("buf_%s", buf.fid),
         buf_content_key = util.format("buf_content_%s", buf.fid),
@@ -184,7 +184,8 @@ var migrate_room = function (server_db, db_room, cb) {
         }
         if (buf.md5 === response.buf_get.md5) {
           if (_.isUndefined(response.buf_content_get)) {
-            log.warn("No data in buffer %s! Setting to empty.", buf.fid);
+            // If buffer content is empty, this is expected
+            log.debug("No data in %s/%s. Setting to empty.", buf.room_id, buf.fid);
             response.buf_content_get = new Buffer(0);
           }
           buf_md5 = utils.md5(response.buf_content_get);
@@ -192,6 +193,10 @@ var migrate_room = function (server_db, db_room, cb) {
             return cb(null, true);
           }
           if (buf.md5 === null || response.buf_content_get === "") {
+            return cb(null, false);
+          }
+          // Empty buf
+          if (buf_md5 === "d41d8cd98f00b204e9800998ecf8427e") {
             return cb(null, false);
           }
           log.warn("MD5 mismatch when loading %s (%s)! Was %s. Should be %s.", buf.fid, buf.path, buf_md5, buf.md5);
@@ -220,7 +225,7 @@ var migrate_room = function (server_db, db_room, cb) {
           if (buf_md5 === buf.md5) {
             save_buf_content(ws, buf, result);
             if (response.buf_content_get) {
-              log.warn("lengths: db: %s file: %s", _.size(response.buf_content_get), _.size(result));
+              log.warn("lengths: db: %s file: %s", _.size(response.buf_content_get), result.length);
             }
             return cb(null, true);
           }
@@ -235,6 +240,7 @@ var migrate_room = function (server_db, db_room, cb) {
           if (response.buf_content_get) {
             log.warn("lengths: db: %s file: %s", _.size(response.buf_content_get), _.size(result));
           }
+          save_buf_content(ws, buf, result);
           return cb(null, false);
         });
       }];
@@ -273,6 +279,8 @@ var migrate_room = function (server_db, db_room, cb) {
     }, function (err) {
       var version_key = util.format("version_%s", db_room.id);
       if (err) {
+        log.error("Error migrating %s: %s", db_room.id, err);
+        process.exit(1);
         server_db.put(version_key, -1, function () {
           ws.end();
         });
@@ -309,7 +317,7 @@ async.auto(auto, function (err, result) {
     process.exit(1);
   }
 
-  async.eachLimit(result.rooms.rows, 1, function (db_room, cb) {
+  async.eachLimit(result.rooms.rows, 5, function (db_room, cb) {
     log.debug("Migrating %s", db_room.id);
     migrate_room(result.levelup, db_room, cb);
   }, function (err) {
