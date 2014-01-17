@@ -100,7 +100,7 @@ var save_buf_content = function (ws, buf, value) {
 
 var migrate_room = function (server_db, db_room, cb) {
   var auto = {},
-    room_path = path.normalize(path.join(settings.bufs_dir, "bufs", db_room.id.toString())),
+    room_path = path.normalize(path.join(settings.bufs_dir, db_room.id.toString())),
     db_path = path.join(room_path, "db");
 
   stats.workspaces.total++;
