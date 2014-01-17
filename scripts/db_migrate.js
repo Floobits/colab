@@ -24,6 +24,7 @@ if (settings.s3) {
 } else {
   log.warn("No S3 settings! Only migrating local data.");
 }
+settings.bufs_dir = path.join(settings.base_dir, "bufs");
 
 
 var load_s3 = function (key, cb) {
@@ -62,6 +63,8 @@ var stats = {
   }
 };
 
+var migrated_rooms = [];
+
 var final_stats = function (err) {
   var succeeded = (stats.bufs.total - stats.bufs.failed);
   console.log("\n");
@@ -97,7 +100,7 @@ var save_buf_content = function (ws, buf, value) {
 
 var migrate_room = function (server_db, db_room, cb) {
   var auto = {},
-    room_path = path.normalize(path.join(settings.base_dir, "bufs", db_room.id.toString())),
+    room_path = path.normalize(path.join(settings.bufs_dir, "bufs", db_room.id.toString())),
     db_path = path.join(room_path, "db");
 
   stats.workspaces.total++;
@@ -140,7 +143,7 @@ var migrate_room = function (server_db, db_room, cb) {
       }
     });
 
-    async.eachLimit(db_bufs.rows, 5, function (buf, cb) {
+    async.eachLimit(db_bufs.rows, 20, function (buf, cb) {
       var buf_auto,
         buf_key = util.format("buf_%s", buf.fid),
         buf_content_key = util.format("buf_content_%s", buf.fid),
@@ -253,17 +256,20 @@ var migrate_room = function (server_db, db_room, cb) {
         }
         if (!s3_client) {
           stats.bufs.empty++;
-          save_buf_content(ws, buf, "");
           return cb();
         }
         s3_key = util.format("%s/%s", db_room.id, buf.fid);
         log.debug("Fetching %s from s3.", s3_key);
         load_s3(s3_key, function (err, result) {
+          var buf_md5;
           if (err) {
             log.error("Error reading %s from s3: %s", s3_key, err);
             stats.bufs.empty++;
-            save_buf_content(ws, buf, "");
           } else {
+            buf_md5 = utils.md5(result);
+            if (buf_md5 !== buf.md5) {
+              log.error("MD5 mismatch when loading %s %s from s3! Was %s. Should be %s.", buf.fid, buf.path, buf_md5, buf.md5);
+            }
             save_buf_content(ws, buf, result);
           }
           cb(err);
@@ -296,6 +302,8 @@ var migrate_room = function (server_db, db_room, cb) {
     if (err) {
       log.error("error getting buffers for room", db_room.id, err);
       stats.workspaces.failed++;
+    } else {
+      migrated_rooms.push(db_room.id);
     }
     return cb(err, result);
   });
@@ -321,12 +329,22 @@ async.auto(auto, function (err, result) {
     log.debug("Migrating %s", db_room.id);
     migrate_room(result.levelup, db_room, cb);
   }, function (err) {
-    console.log("\n");
     if (err) {
       log.error("Error: %s", err);
     }
-    console.log("\n");
-    log.log("%s workspaces in DB", result.rooms.rows.length);
-    final_stats();
+
+    fs.readdir(settings.bufs_dir, function (err, workspaces) {
+      if (err) {
+        log.error("Error reading %s: %s", settings.bufs_dir, err);
+      }
+      _.each(workspaces, function (workspace) {
+        var workspace_id = parseInt(workspace, 10);
+        if (!_.contains(migrated_rooms, workspace_id)) {
+          log.error("%s on disk but was not migrated", workspace);
+        }
+      });
+      log.log("%s workspaces in DB", result.rooms.rows.length);
+      final_stats();
+    });
   });
 });
