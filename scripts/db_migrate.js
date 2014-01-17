@@ -334,13 +334,22 @@ async.auto(auto, function (err, result) {
     }
 
     fs.readdir(settings.bufs_dir, function (err, workspaces) {
+      var dead_workspaces_path = path.normalize(path.join(settings.bufs_dir, "old_bufs"));
       if (err) {
         log.error("Error reading %s: %s", settings.bufs_dir, err);
       }
       _.each(workspaces, function (workspace) {
-        var workspace_id = parseInt(workspace, 10);
+        var workspace_id = parseInt(workspace, 10),
+          old_path = path.join(settings.bufs_dir, workspace),
+          p = path.join(dead_workspaces_path, workspace);
+        if (!_.isFinite(workspace_id)) {
+          log.warn("No clue wtf %s is doing in here.", workspace);
+          return;
+        }
         if (!_.contains(migrated_rooms, workspace_id)) {
-          log.error("%s on disk but was not migrated", workspace);
+          fs.mkdirsSync(dead_workspaces_path);
+          log.error("%s on disk but not migrated. Moving to %s", workspace, dead_workspaces_path);
+          fs.renameSync(old_path, p);
         }
       });
       log.log("%s workspaces in DB", result.rooms.rows.length);
