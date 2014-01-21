@@ -87,14 +87,14 @@ process.on("uncaughtException", final_stats);
 process.on("SIGINT", final_stats);
 process.on("SIGTERM", final_stats);
 
-var save_buf_content = function (ws, buf, value) {
+var save_buf_content = function (db, ws, buf, value) {
   buf.md5 = utils.md5(value);
   ws.write({
     key: util.format("buf_%s", buf.id),
     value: buf
   });
   if (value.length === 0) {
-    ws.db.del(util.format("buf_content_%s", buf.id));
+    db.del(util.format("buf_content_%s", buf.id));
     return;
   }
   ws.write({
@@ -230,7 +230,7 @@ var migrate_room = function (server_db, db_room, cb) {
           }
           buf_md5 = utils.md5(result);
           if (buf_md5 === buf.md5) {
-            save_buf_content(ws, buf_obj, result);
+            save_buf_content(ldb, ws, buf_obj, result);
             if (response.buf_content_get) {
               log.warn("lengths: db: %s file: %s", _.size(response.buf_content_get), result.length);
             }
@@ -238,11 +238,11 @@ var migrate_room = function (server_db, db_room, cb) {
           }
           if (response.buf_content_get && buf_md5 === utils.md5(response.buf_content_get)) {
             log.warn("File and leveldb agree, but postgres doesn't.");
+            save_buf_content(ldb, ws, buf_obj, result);
             return cb(null, true);
           }
           if (buf.md5 === null || result === "") {
             log.error("buf md5 is %s. result is '%s'", buf.md5, result);
-            process.exit(1);
             return cb(null, false);
           }
           log.error("MD5 mismatch when loading %s %s off disk! Was %s. Should be %s.", buf.fid, buf.path, buf_md5, buf.md5);
@@ -250,7 +250,7 @@ var migrate_room = function (server_db, db_room, cb) {
           if (response.buf_content_get) {
             log.warn("lengths: db: %s file: %s", _.size(response.buf_content_get), _.size(result));
           }
-          save_buf_content(ws, buf_obj, result);
+          save_buf_content(ldb, ws, buf_obj, result);
           return cb(null, false);
         });
       }];
@@ -277,7 +277,7 @@ var migrate_room = function (server_db, db_room, cb) {
             if (buf_md5 !== buf.md5) {
               log.error("MD5 mismatch when loading %s %s from s3! Was %s. Should be %s.", buf.fid, buf.path, buf_md5, buf.md5);
             }
-            save_buf_content(ws, buf_obj, result);
+            save_buf_content(ldb, ws, buf_obj, result);
           }
           cb(err);
         });
