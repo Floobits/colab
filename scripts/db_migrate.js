@@ -323,7 +323,17 @@ auto.levelup = function (cb) {
 };
 
 auto.rooms = function (cb) {
-  return db.query("SELECT * FROM room_room", cb);
+  var query = "SELECT * FROM room_room",
+    workspace_ids = process.argv.slice(2);
+
+  if (workspace_ids.length > 0) {
+    query += util.format(" WHERE id in (%s)", workspace_ids.join(", "));
+    settings.move_dead_workspaces = false;
+  } else {
+    settings.move_dead_workspaces = true;
+  }
+
+  return db.query(query, cb);
 };
 
 async.auto(auto, function (err, result) {
@@ -353,7 +363,7 @@ async.auto(auto, function (err, result) {
           log.warn("No clue wtf %s is doing in here.", workspace);
           return;
         }
-        if (!_.contains(migrated_rooms, workspace_id)) {
+        if (!_.contains(migrated_rooms, workspace_id) && settings.move_dead_workspaces) {
           /*jslint stupid: true */
           fs.mkdirsSync(dead_workspaces_path);
           log.error("%s on disk but not migrated. Moving to %s", workspace, dead_workspaces_path);
