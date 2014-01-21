@@ -88,11 +88,17 @@ process.on("SIGINT", final_stats);
 process.on("SIGTERM", final_stats);
 
 var save_buf_content = function (ws, buf, value) {
+  buf.md5 = utils.md5(value);
+  ws.write({
+    key: util.format("buf_%s", buf.id),
+    value: buf
+  });
   if (value.length === 0) {
+    ws.db.del(util.format("buf_content_%s", buf.id));
     return;
   }
   ws.write({
-    key: util.format("buf_content_%s", buf.fid),
+    key: util.format("buf_content_%s", buf.id),
     value: value,
     valueEncoding: "binary"
   });
@@ -196,10 +202,12 @@ var migrate_room = function (server_db, db_room, cb) {
             return cb(null, true);
           }
           if (buf.md5 === null || response.buf_content_get === "") {
+            log.warn("buf md5 is %s. response.buf_content_get is '%s'", buf.md5, response.buf_content_get);
             return cb(null, false);
           }
           // Empty buf
           if (buf_md5 === "d41d8cd98f00b204e9800998ecf8427e") {
+            stats.bufs.empty++;
             return cb(null, false);
           }
           log.warn("MD5 mismatch when loading %s (%s)! Was %s. Should be %s.", buf.fid, buf.path, buf_md5, buf.md5);
@@ -212,10 +220,6 @@ var migrate_room = function (server_db, db_room, cb) {
         if (response.verify_buf) {
           return cb();
         }
-        ws.write({
-          key: buf_key,
-          value: buf_obj
-        });
         buf_path = path.join(room_path, buf.fid.toString());
         fs.readFile(buf_path, function (err, result) {
           var buf_md5;
@@ -226,7 +230,7 @@ var migrate_room = function (server_db, db_room, cb) {
           }
           buf_md5 = utils.md5(result);
           if (buf_md5 === buf.md5) {
-            save_buf_content(ws, buf, result);
+            save_buf_content(ws, buf_obj, result);
             if (response.buf_content_get) {
               log.warn("lengths: db: %s file: %s", _.size(response.buf_content_get), result.length);
             }
@@ -237,13 +241,16 @@ var migrate_room = function (server_db, db_room, cb) {
             return cb(null, true);
           }
           if (buf.md5 === null || result === "") {
+            log.error("buf md5 is %s. result is '%s'", buf.md5, result);
+            process.exit(1);
             return cb(null, false);
           }
           log.error("MD5 mismatch when loading %s %s off disk! Was %s. Should be %s.", buf.fid, buf.path, buf_md5, buf.md5);
+          stats.bufs.bad_checksum++;
           if (response.buf_content_get) {
             log.warn("lengths: db: %s file: %s", _.size(response.buf_content_get), _.size(result));
           }
-          save_buf_content(ws, buf, result);
+          save_buf_content(ws, buf_obj, result);
           return cb(null, false);
         });
       }];
@@ -255,7 +262,7 @@ var migrate_room = function (server_db, db_room, cb) {
           return cb();
         }
         if (!s3_client) {
-          stats.bufs.empty++;
+          stats.bufs.bad_checksum++;
           return cb();
         }
         s3_key = util.format("%s/%s", db_room.id, buf.fid);
@@ -270,7 +277,7 @@ var migrate_room = function (server_db, db_room, cb) {
             if (buf_md5 !== buf.md5) {
               log.error("MD5 mismatch when loading %s %s from s3! Was %s. Should be %s.", buf.fid, buf.path, buf_md5, buf.md5);
             }
-            save_buf_content(ws, buf, result);
+            save_buf_content(ws, buf_obj, result);
           }
           cb(err);
         });
@@ -347,9 +354,11 @@ async.auto(auto, function (err, result) {
           return;
         }
         if (!_.contains(migrated_rooms, workspace_id)) {
+          /*jslint stupid: true */
           fs.mkdirsSync(dead_workspaces_path);
           log.error("%s on disk but not migrated. Moving to %s", workspace, dead_workspaces_path);
           fs.renameSync(old_path, p);
+          /*jslint stupid: false */
         }
       });
       log.log("%s workspaces in DB", result.rooms.rows.length);
