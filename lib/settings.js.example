@@ -15,6 +15,9 @@ exports.busy = {
   rss_used: 0.7
 };
 
+// If abs(disk usage - average usage) > 0.1, balance
+exports.rebalance_threshold = 0.1;
+
 exports.auth = {
   username: "test",
   password: "test"
