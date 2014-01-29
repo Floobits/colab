@@ -22,10 +22,8 @@ exports.django_pass = "";
 exports.json_port = 3148;
 //exports.json_port_ssl = 3448;
 
-exports.metrics_port = 81;
-
-exports.command_port = 8443;
-exports.command_auth = {
+exports.api_port = 8443;
+exports.api_auth = {
   username: "test",
   password: "test"
 };
