@@ -26,8 +26,7 @@ exports.auth = {
 exports.colab_servers = [
   {
     ip: "127.0.0.1",
-    metrics_port: 8081,
-    command_port: 8443,
+    api_port: 8443,
     colab_port: 3148,
     ssl: false,
     name: "debug",
