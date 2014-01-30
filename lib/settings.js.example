@@ -30,7 +30,16 @@ exports.colab_servers = [
     colab_port: 3148,
     ssl: false,
     name: "debug",
-    exclude: true
+    exclude: false
+  },
+  {
+    ip: "127.0.0.2",
+    api_port: 8444,
+    colab_port: 3149,
+    ssl: false,
+    name: "backup",
+    exclude: false,
+    backup: true
   }
 ];
 
