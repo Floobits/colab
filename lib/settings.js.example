@@ -38,7 +38,6 @@ exports.colab_servers = [
     colab_port: 3149,
     ssl: false,
     name: "backup",
-    exclude: false,
     backup: true
   }
 ];
