@@ -26,6 +26,7 @@ exports.auth = {
 exports.colab_servers = [
   {
     ip: "127.0.0.1",
+    external_ip: "127.0.0.1",
     api_port: 8443,
     colab_port: 3148,
     ssl: false,
@@ -34,6 +35,7 @@ exports.colab_servers = [
   },
   {
     ip: "127.0.0.2",
+    external_ip: "127.0.0.1",
     api_port: 8444,
     colab_port: 3149,
     ssl: false,
