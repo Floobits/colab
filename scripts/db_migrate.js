@@ -164,7 +164,7 @@ var migrate_room = function (server_db, db_room, cb) {
         path: buf.path,
         deleted: buf.deleted,
         md5: buf.md5,
-        encoding: buf.encoding
+        encoding: db.buf_encodings_mapping[buf.encoding]
       };
 
       stats.bufs.total++;
