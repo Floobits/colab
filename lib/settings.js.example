@@ -8,6 +8,13 @@ exports.log_level = "debug";
 exports.http_port = 80;
 exports.https_port = 443;
 
+exports.db_info = {
+  user: "floobits",
+  password: "1234",
+  database: "floobits",
+  host: "127.0.0.1"
+};
+
 // If any of these are true, mark the server as busy.
 exports.busy = {
   loadavg: 0.5,
