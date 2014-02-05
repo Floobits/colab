@@ -6,6 +6,7 @@ var DMP = require("native-diff-match-patch");
 var _ = require("lodash");
 
 var room = require("room");
+var settings = require("settings");
 var utils = require("utils");
 
 var mock = require("mock");
@@ -14,6 +15,9 @@ log.set_log_level("debug");
 
 var buf;
 agent_id = 0;
+
+
+settings.bufs_dir = "/tmp/colab_test";
 
 
 var patch = function (agent, after) {
@@ -51,19 +55,20 @@ var setup = function (cb) {
     cur_fid: 0,
     max_size: 2147483647,
     require_ssl: false
+  }, null, function () {
+    buf = new mock.buf.make_buffer(r, 0, "test.txt", "abc", undefined, true, "utf8");
+    // Set this so the test doesn't hang for 90 seconds before exiting.
+    buf.save_timeout = 1;
+
+    r.bufs[buf.id] = buf;
+    r.tree_add_buf(buf);
+
+    agent1 = new mock.FakeAgentConnection(r, ++agent_id);
+    agent2 = new mock.FakeAgentConnection(r, ++agent_id);
+
+    log.set_log_level("debug");
+    cb();
   });
-  buf = new mock.buf.make_buffer(r, 0, "test.txt", "abc", undefined, true, "utf8");
-  // Set this so the test doesn't hang for 90 seconds before exiting.
-  buf.save_timeout = 1;
-
-  r.bufs[buf.id] = buf;
-  r.tree_add_buf(buf);
-
-  agent1 = new mock.FakeAgentConnection(r, ++agent_id);
-  agent2 = new mock.FakeAgentConnection(r, ++agent_id);
-
-  log.set_log_level("debug");
-  cb();
 };
 
 var teardown = function (cb) {
