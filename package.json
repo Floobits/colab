@@ -12,6 +12,7 @@
     "express": "3.x",
     "floorine": "0.x",
     "lodash": "2.4.x",
+    "mc": "1.x",
     "nodeunit": "0.8.x",
     "pg": "2.x",
     "request": "2.x"
