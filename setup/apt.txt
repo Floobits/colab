@@ -5,7 +5,6 @@ make
 mercurial
 msmtp
 nodejs
-npm
 pkg-config
 runit
 subversion
