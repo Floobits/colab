@@ -35,8 +35,8 @@ do
   sudo npm install && \
   sudo npm update && \
   sudo ln -s -f /data/releases/$RELEASE_NAME /data/colab-new && \
-  sudo mv -T -f /data/colab-new /data/colab && \
-  sudo sv restart /service/colab/"
+  sudo mv -T -f /data/colab-new /data/colab" # && \
+  #  sudo sv restart /service/colab/"
 
   if [ $? -eq 0 ]
   then
