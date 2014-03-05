@@ -22,8 +22,7 @@
     "nodeunit": "0.8.x",
     "optimist": "0.6.x",
     "pg": "2.x",
-    "request": "2.x",
-    "socket.io": "0.9.x"
+    "request": "2.x"
   },
   "engines": {
     "node": ">=0.10.0"
