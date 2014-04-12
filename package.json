@@ -8,12 +8,11 @@
   ],
   "version": "0.0.2",
   "dependencies": {
-    "async": "0.2.x",
+    "async": "0.6.x",
     "diff_match_patch": "0.1.x",
     "express": "3.x",
     "floorine": "0.x",
     "fs-extra": "0.8.x",
-    "knox": "0.8.x",
     "leveldown": "https://github.com/ggreer/node-leveldown/archive/dont_leak_options_attrs.tar.gz",
     "levelup": "0.x",
     "lodash": "2.x",
@@ -21,7 +20,7 @@
     "native-diff-match-patch": "0.0.x",
     "nodeunit": "0.8.x",
     "optimist": "0.6.x",
-    "pg": "2.x",
+    "pg": "3.x",
     "request": "2.x"
   },
   "engines": {
