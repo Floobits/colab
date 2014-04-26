@@ -11,8 +11,6 @@ exports.db_info = {
   host: "127.0.0.1"
 };
 
-exports.cache_servers = ["127.0.0.1:11211"]
-
 exports.conn_keepalive = 30000;
 
 exports.django_base_url = "https://floobits.com";
