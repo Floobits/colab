@@ -68,7 +68,7 @@ var FakeAgentConnection = function (r, agent_id) {
   self.patch_events = [];
 
   r.on("dmp", self.dmp_listener);
-  r.emit("dmp", self, "join", {
+  r.broadcast("join", null, self, {
     "client": self.client,
     "platform": self.platform,
     "user_id": self.id,
