@@ -97,7 +97,7 @@ FakeAgentConnection.prototype.pop_patch = function (count) {
   while (count > 0) {
     data = self.patch_events.shift();
     if (data) {
-      self.patch(data.patch, data.md5_before, data.md5_after);
+      self.patch(null, data.patch, data.md5_before, data.md5_after);
     }
     count--;
   }

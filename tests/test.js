@@ -37,7 +37,7 @@ var patch = function (agent, after) {
 
   log.log(agent.toString(), "sending patch from", agent.buf, "to", after);
   agent.buf = after;
-  buf.patch(agent, patches, md5_before, md5_after);
+  buf.patch(null, agent, patches, md5_before, md5_after);
   log.log("buf state is", buf._state);
 };
 
