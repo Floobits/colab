@@ -16,7 +16,7 @@
     "leveldown": "https://github.com/ggreer/node-leveldown/archive/dont_leak_options_attrs.tar.gz",
     "levelup": "0.x",
     "lodash": "2.x",
-    "native-diff-match-patch": "0.0.x",
+    "native-diff-match-patch": "0.1.x",
     "nodeunit": "0.8.x",
     "optimist": "0.6.x",
     "pg": "3.x",
