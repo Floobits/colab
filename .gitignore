@@ -2,5 +2,6 @@
 .DS_Store
 .idea
 .sublime-project
+colab-*.tar.gz
 node_modules
 npm-debug.log
