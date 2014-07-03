@@ -1,3 +1,10 @@
 #!/bin/sh
 
-jslint lib/*.js tests/*.js
+jslint \
+--plusplus true \
+--sloppy true \
+--todo true \
+--node true \
+--indent 2 \
+--nomen true \
+lib/*.js tests/*.js
