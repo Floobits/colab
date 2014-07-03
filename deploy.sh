@@ -1,36 +1,40 @@
 #!/bin/sh
 
-if [ $# -ne 2 ] && [ $# -ne 1 ]
+if [ $# -eq 0 ]
 then
-  echo "Usage: $0 release-name.tar.gz hostname"
+  echo "Usage: $0 release-name.tar.gz hostname0 hostname1 hostname2 ..."
   exit 0
 fi
 
-if [ $# -eq 1 ]
+echo $1 | grep '\.tar\.gz$'
+
+if [ $? -eq 0 ]
 then
-  TARBALL=`./build_release.sh`
-  HOST=$1
-else
   TARBALL=$1
-  HOST=$2
+  shift
+else
+  echo "Building tarball..."
+  TARBALL=`./build_release.sh`
+  echo "Built $TARBALL"
 fi
 
 RELEASE_NAME=$(basename "$TARBALL")
 RELEASE_NAME="${RELEASE_NAME%%.*}"
 RELEASE_DIR="/data/releases/$RELEASE_NAME"
 
-echo "Deploying $RELEASE_NAME to $HOST"
+for HOST in $@
+do
+  echo "Deploying $RELEASE_NAME to $HOST"
 
-scp -C $RELEASE_NAME.tar.gz $HOST:/tmp
+  scp -C $TARBALL $HOST:/tmp
+  scp ./upgrade.sh $HOST:/tmp/upgrade_$RELEASE_NAME.sh
 
-ssh $HOST "sudo mkdir /data/releases/$RELEASE_NAME && sudo tar xzf /tmp/$RELEASE_NAME.tar.gz --directory /data/releases/$RELEASE_NAME"
-ssh $HOST "sudo cp /data/colabcontrol/lib/settings.js /data/releases/$RELEASE_NAME/lib/settings.js"
-ssh $HOST "sudo cp -r /data/colabcontrol/node_modules /data/releases/$RELEASE_NAME/"
-ssh $HOST "cd /data/releases/$RELEASE_NAME && \
-sudo npm install && \
-sudo npm update && \
-sudo ln -s -f /data/releases/$RELEASE_NAME /data/colabcontrol-new && \
-sudo mv -T -f /data/colabcontrol-new /data/colabcontrol && \
-sudo sv restart /service/colabcontrol/"
+  ssh $HOST "sudo /tmp/upgrade_$RELEASE_NAME.sh /tmp/$TARBALL"
 
-curl -X POST http://$USER:$USER@dev00.floobits.com/deploy/colabcontrol/$HOST
+  if [ $? -eq 0 ]
+  then
+    curl -X POST http://$USER:$USER@dev00.floobits.com/deploy/colabcontrol/$HOST
+  else
+    echo "OMG DEPLOY FAILED"
+  fi
+done
