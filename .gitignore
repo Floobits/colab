@@ -1,6 +1,5 @@
 .DS_Store
 .sublime-project
 colabcontrol-*.tar.gz
-lib/settings.js
 node_modules
 npm-debug.log
