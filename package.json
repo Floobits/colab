@@ -8,7 +8,7 @@
   ],
   "version": "0.0.1",
   "dependencies": {
-    "async": "0.2.x",
+    "async": "0.9.x",
     "express": "3.x",
     "floorine": "0.x",
     "lodash": "2.x",
