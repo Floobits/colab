@@ -26,17 +26,10 @@ for HOST in $@
 do
   echo "Deploying $RELEASE_NAME to $HOST"
 
-  scp -C $RELEASE_NAME.tar.gz $HOST:/tmp
+  scp -C $TARBALL $HOST:/tmp
+  scp ./upgrade.sh $HOST:/tmp/upgrade_$RELEASE_NAME.sh
 
-  ssh $HOST "sudo mkdir /data/releases/$RELEASE_NAME && sudo tar xzf /tmp/$RELEASE_NAME.tar.gz --directory /data/releases/$RELEASE_NAME"
-  ssh $HOST "sudo cp /data/colab/lib/settings.js /data/releases/$RELEASE_NAME/lib/settings.js"
-  ssh $HOST "sudo cp -r /data/colab/node_modules /data/releases/$RELEASE_NAME/"
-  ssh $HOST "cd /data/releases/$RELEASE_NAME && \
-  sudo npm install && \
-  sudo npm update && \
-  sudo ln -s -f /data/releases/$RELEASE_NAME /data/colab-new && \
-  sudo mv -T -f /data/colab-new /data/colab && \
-  sudo sv restart /service/colab/"
+  ssh $HOST "sudo /tmp/upgrade_$RELEASE_NAME.sh /tmp/$TARBALL"
 
   if [ $? -eq 0 ]
   then
