@@ -14,7 +14,7 @@ RELEASE_DIR="/data/releases/$RELEASE_NAME"
 mkdir $RELEASE_DIR && \
 tar xzf $TARBALL --directory $RELEASE_DIR && \
 cd $RELEASE_DIR && \
-npm rebuild && \
+HOME=/tmp npm rebuild && \
 node ./lib/migrate_settings.js /data/colabcontrol/lib && \
 cp /data/colabcontrol/lib/local_settings.js $RELEASE_DIR/lib/local_settings.js && \
 ln -s -f $RELEASE_DIR /data/colabcontrol-new && \
