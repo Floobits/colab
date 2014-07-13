@@ -54,7 +54,6 @@ var setup = function (cb) {
   r = new room.Room(-1, "fake_room", "fake_owner", {
     cur_fid: 0,
     max_size: 2147483647,
-    require_ssl: false
   }, null, function () {
     buf = new mock.buf.make_buffer(r, 0, "test.txt", "abc", undefined, true, "utf8");
     // Set this so the test doesn't hang for 90 seconds before exiting.
