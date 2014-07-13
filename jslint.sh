@@ -7,4 +7,4 @@ jslint \
 --node true \
 --indent 2 \
 --nomen true \
-lib/*.js scripts/*.js tests/*.js
+lib/*.js tests/*.js
