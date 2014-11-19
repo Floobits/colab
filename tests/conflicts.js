@@ -176,7 +176,7 @@ var test6 = function (test) {
 module.exports = {
   setUp: test.setup,
   tearDown: test.teardown,
-  // test1: test1,
+  test1: test1,
   // test2: test2,
   // test3: test3,
   // test4: test4,

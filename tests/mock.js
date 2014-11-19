@@ -43,7 +43,7 @@ var FakeAgentConnection = function (r, agent_id) {
   self.username = self.toString();
   self.secret = "aoeuidhtns";
   self.client = "FAKE";
-  self.version = "0.02";//agent.SUPPORTED_VERSIONS.slice(-1)[0];
+  self.version = "0.11";//agent.SUPPORTED_VERSIONS.slice(-1)[0];
   self.platform = "FAKE_PLATFORM";
   self.authenticated = true;
   self.user_id = -1;
@@ -66,14 +66,7 @@ var FakeAgentConnection = function (r, agent_id) {
   self.buf = self.bufs[0]._state;
   self.lag = 0;
   self.patch_events = [];
-
-  r.on("dmp", self.dmp_listener);
-  r.broadcast("join", null, self, {
-    "client": self.client,
-    "platform": self.platform,
-    "user_id": self.id,
-    "username": self.username
-  });
+  self.room.broadcast("join", self, null, self.to_json());
 };
 
 util.inherits(FakeAgentConnection, agent.AgentConnection);

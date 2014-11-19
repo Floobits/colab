@@ -37,7 +37,7 @@ var patch = function (agent, after) {
 
   log.log(agent.toString(), "sending patch from", agent.buf, "to", after);
   agent.buf = after;
-  buf.patch(null, agent, patches, md5_before, md5_after);
+  buf.patch(agent, null, patches, md5_before, md5_after);
   log.log("buf state is", buf._state);
 };
 
@@ -50,11 +50,19 @@ var verify = function (test, agents) {
 };
 
 var setup = function (cb) {
-  log.set_log_level("error");
+  log.set_log_level("debug");
   r = new room.Room(-1, "fake_room", "fake_owner", {
     cur_fid: 0,
     max_size: 2147483647,
-  }, null, function () {
+  }, {
+    workspaces: {},
+    db: {
+      get: function (cb) {
+        return cb(1);
+      }
+    }
+  });
+  r.once("load", function () {
     buf = new mock.buf.make_buffer(r, 0, "test.txt", "abc", undefined, true, "utf8");
     // Set this so the test doesn't hang for 90 seconds before exiting.
     buf.save_timeout = 1;
@@ -68,6 +76,7 @@ var setup = function (cb) {
     log.set_log_level("debug");
     cb();
   });
+  r.load();
 };
 
 var teardown = function (cb) {
