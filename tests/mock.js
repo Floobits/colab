@@ -27,7 +27,7 @@ util.inherits(MockConn, events.EventEmitter);
 
 MockConn.prototype.write = function (name, data) {
   var self = this;
-  console.log(self.agent.toString(), "name:", name, "data:", JSON.stringify(data, null, 2));
+  // console.log(self.agent.toString(), "name:", name, "data:", JSON.stringify(data, null, 2));
 };
 
 
@@ -113,7 +113,7 @@ FakeAgentConnection.prototype.write = function (name, data) {
   var self = this;
 
   self.conn.write(name, data);
-
+  log.log(self.id, name);
   if (name === "patch") {
     self.patch_events.push(data);
   } else if (name === "get_buf") {
