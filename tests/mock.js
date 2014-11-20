@@ -97,7 +97,7 @@ FakeAgentConnection.prototype.pop_patch = function (count) {
   while (count > 0) {
     data = self.patch_events.shift();
     if (data) {
-      self.patch(null, data.patch, data.md5_before, data.md5_after);
+      self.patch(data.patch, data.md5_before, data.md5_after);
     }
     count--;
   }
@@ -116,7 +116,7 @@ FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_afte
   self.buf = result[0];
 };
 
-FakeAgentConnection.prototype.write = function (name, data) {
+FakeAgentConnection.prototype.write = function (name, req_id, data) {
   var self = this;
 
   self.conn.write(name, data);
