@@ -25,10 +25,10 @@ var MockConn = function (agent) {
 
 util.inherits(MockConn, events.EventEmitter);
 
-MockConn.prototype.write = function (name, data) {
+MockConn.prototype.write = function (name, req_id, data) {
   var self = this;
   if (settings.log_data) {
-    console.log(self.agent.toString(), "name:", name, "data:", JSON.stringify(data, null, 2));
+    console.log(self.agent.toString(), "name:", name, "req_id:", req_id, "data:", JSON.stringify(data, null, 2));
   }
 };
 
@@ -119,7 +119,7 @@ FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_afte
 FakeAgentConnection.prototype.write = function (name, req_id, data) {
   var self = this;
 
-  self.conn.write(name, data);
+  self.conn.write(name, req_id, data);
   log.log(self.id, name);
   if (name === "patch") {
     self.patch_events.push(data);
