@@ -44,90 +44,91 @@ var test3 = function (test) {
   agent2.buf = "abc";
 
   patch(agent1, "abcd");
-  // ▪️    LOG 2014-11-20 12:57:47 PST agent1 sending patch from abc to abcd
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST applying patch @@ -1,3 +1,4 @@
+  // agent1 sending patch from abc to abcd
+  // applying patch @@ -1,3 +1,4 @@
   //  abc
   // +d
   //  to buf
 
   patch(agent1, "abcde");
-  // ▪️    LOG 2014-11-20 12:57:47 PST agent1 sending patch from abcd to abcde
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST applying patch @@ -1,4 +1,5 @@
+  // agent1 sending patch from abcd to abcde
+  // applying patch @@ -1,4 +1,5 @@
   //  abcd
   // +e
   //  to buf
 
   patch(agent2, "abcd");
-  //     LOG 2014-11-20 12:57:47 PST agent2 sending patch from abc to abcd
-  // ▪️    LOG 2014-11-20 12:57:47 PST md5_before doesn't match. BE WARY!
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST applying patch 1 @@ -1,3 +1,4 @@
+  // agent2 sending patch from abc to abcd
+  // md5_before doesn't match. BE WARY!
+  // applying patch 1 @@ -1,3 +1,4 @@
   //  abc
   // +d
   //  to agent2 text
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST agent2 text is <Buffer 61 62 63 64>
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST agent2 text matches current state. entering time machine.
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST found matching previous md5
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST applying patch 2  @@ -1,3 +1,4 @@
+  // agent2 text is <Buffer 61 62 63 64>
+  // agent2 text matches current state. entering time machine.
+  // found matching previous md5
+  // applying patch [-2] from the past by agent1 from @@ -1,3 +1,4 @@
   //  abc
   // +d
-  //  to <Buffer 61 62 63 64> text
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST agent2 text is <Buffer 61 62 63 64 64>
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST found matching previous md5
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST applying patch 2  @@ -1,4 +1,5 @@
+  //  to abcd text
+  // agent2 text is <Buffer 61 62 63 64 64>
+  // found matching previous md5
+  // applying patch [-1] from the past by agent1 from @@ -1,4 +1,5 @@
   //  abcd
   // +e
-  //  to <Buffer 61 62 63 64 64> text
-  // ▪️    LOG 2014-11-20 12:57:47 PST undo patch: @@ -1,6 +1,5 @@
+  //  to abcdd text
+  // undo patch from abcdde to abcde:
+  // @@ -1,6 +1,5 @@
   //  abcd
   // -d
   //  e
-  // ▪️    LOG 2014-11-20 12:57:47 PST 2 'patch'
-  // ▪️    LOG 2014-11-20 12:57:47 PST buf state is <Buffer 61 62 63 64 65>
+  // 2 'patch'
+  // buf state is <Buffer 61 62 63 64 65>
 
   patch(agent2, "abcde");
-  // ▪️    LOG 2014-11-20 12:57:47 PST agent2 sending patch from abcd to abcde
-  // ▪️    LOG 2014-11-20 12:57:47 PST md5_before doesn't match. BE WARY!
-  // ▪️    LOG 2014-11-20 12:57:47 PST md5_after matches current state ab56b4d92b40713acc5af89985d4b786 patch text: @@ -1,4 +1,5 @@
+  // agent2 sending patch from abcd to abcde
+  // md5_before doesn't match. BE WARY!
+  // md5_after matches current state ab56b4d92b40713acc5af89985d4b786 patch text: @@ -1,4 +1,5 @@
   //  abcd
   // +e
-
-  // This is the patch agent2 sent
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST applying patch 1 @@ -1,4 +1,5 @@
+  // applying patch from wire @@ -1,4 +1,5 @@
   //  abcd
   // +e
   //  to agent2 text
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST agent2 text is <Buffer 61 62 63 64 65>
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST found matching previous md5
-
-
-  // This is the patch agent1 sent
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST applying patch 2  @@ -1,4 +1,5 @@
+  // agent2 text is <Buffer 61 62 63 64 65>
+  
+  // found matching previous md5
+  // applying patch [-1] from the past by agent1 from @@ -1,4 +1,5 @@
   //  abcd
   // +e
-  //  to <Buffer 61 62 63 64 65> text
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST applying patch @@ -1,5 +1,6 @@
+  //  to abcde text
+
+  // applying patch 3 @@ -1,5 +1,6 @@
   //  abcde
   // +e
   //  to buf
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST Buffer 0 -1 fake_owner/fake_room/test.txt md5 94af155370ff640425a75c743ade5787 length 6 updated. md5 was ab56b4d92b40713acc5af89985d4b786 now 94af155370ff640425a75c743ade5787
-  // ▪️    LOG 2014-11-20 12:57:47 PST 1 'patch'
-  // ▪️    LOG 2014-11-20 12:57:47 PST buf state is <Buffer 61 62 63 64 65 65>
+  // Buffer 0 -1 fake_owner/fake_room/test.txt md5 94af155370ff640425a75c743ade5787 length 6 updated. md5 was ab56b4d92b40713acc5af89985d4b786 now 94af155370ff640425a75c743ade5787
+  // 1 'patch'
+  // buf state is <Buffer 61 62 63 64 65 65>
 
   patch(agent2, "abcdef");
 
-  // ▪️    LOG 2014-11-20 12:57:47 PST agent2 sending patch from abcde to abcdef
-  // ▪️    LOG 2014-11-20 12:57:47 PST md5_before doesn't match. BE WARY!
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST applying patch 1 @@ -1,5 +1,6 @@
+  // agent2 sending patch from abcde to abcdef
+  // md5_before doesn't match. BE WARY!
+
+  // applying patch from wire @@ -1,5 +1,6 @@
   //  abcde
   // +f
   //  to agent2 text
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST agent2 text is <Buffer 61 62 63 64 65 66>
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST found matching previous md5
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST applying patch 2  @@ -1,5 +1,6 @@
+  // agent2 text is <Buffer 61 62 63 64 65 66>
+  // found matching previous md5
+  
+  // applying patch [-1] from the past by agent2 from @@ -1,5 +1,6 @@
   //  abcde
   // +e
-  //  to <Buffer 61 62 63 64 65 66> text
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST applying patch @@ -1,6 +1,7 @@
+  //  to abcdef text
+  
+  // applying patch 3 @@ -1,6 +1,7 @@
   //  abcde
   // +f
   //  e
@@ -136,15 +137,15 @@ var test3 = function (test) {
   agent2.pop_patch(-1);
   agent1.pop_patch(-1);
 
-  // ▫️  DEBUG 2014-11-20 12:57:47 PST Buffer 0 -1 fake_owner/fake_room/test.txt md5 bcf04267b681e00357374109284df439 length 7 updated. md5 was 94af155370ff640425a75c743ade5787 now bcf04267b681e00357374109284df439
-  // ▪️    LOG 2014-11-20 12:57:47 PST 1 'patch'
-  // ▪️    LOG 2014-11-20 12:57:47 PST buf state is <Buffer 61 62 63 64 65 66 65>
-  // 🔥  ERROR 2014-11-20 12:57:47 PST Patch wasn't applied! [ 'abcdef', [ false ] ] 900150983cd24fb0d6963f7d28e17f72 e2fc714c4727ee9395f324cd2e7f331f
-  // ▪️    LOG 2014-11-20 12:57:47 PST agent2 patched from abcdef to abcdefe
-  // ▪️    LOG 2014-11-20 12:57:47 PST agent2 patched from abcdefe to abcde
-  // ▪️    LOG 2014-11-20 12:57:47 PST agent1 patched from abcde to abcdee
-  // ▪️    LOG 2014-11-20 12:57:47 PST agent1 patched from abcdee to abcdefe
-  // ▪️    LOG 2014-11-20 12:57:47 PST buf is <Buffer 61 62 63 64 65 66 65>
+  // Buffer 0 -1 fake_owner/fake_room/test.txt md5 bcf04267b681e00357374109284df439 length 7 updated. md5 was 94af155370ff640425a75c743ade5787 now bcf04267b681e00357374109284df439
+  // 1 'patch'
+  // buf state is <Buffer 61 62 63 64 65 66 65>
+  // Patch wasn't applied! [ 'abcdef', [ false ] ] 900150983cd24fb0d6963f7d28e17f72 e2fc714c4727ee9395f324cd2e7f331f
+  // agent2 patched from abcdef to abcdefe
+  // agent2 patched from abcdefe to abcde
+  // agent1 patched from abcde to abcdee
+  // agent1 patched from abcdee to abcdefe
+  // buf is <Buffer 61 62 63 64 65 66 65>
 
   verify(test, [agent1, agent2]);
   test.done();
