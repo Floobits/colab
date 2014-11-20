@@ -13,7 +13,7 @@ var buf = require("../lib/buffer");
 var room = require("room");
 var perms = require("perms");
 var utils = require("utils");
-
+var settings = require("settings");
 
 log.set_log_level("debug");
 
@@ -27,14 +27,15 @@ util.inherits(MockConn, events.EventEmitter);
 
 MockConn.prototype.write = function (name, data) {
   var self = this;
-  // console.log(self.agent.toString(), "name:", name, "data:", JSON.stringify(data, null, 2));
+  if (settings.log_data) {
+    console.log(self.agent.toString(), "name:", name, "data:", JSON.stringify(data, null, 2));
+  }
 };
 
 
 var FakeAgentConnection = function (r, agent_id) {
   var self = this,
-    conn = new MockConn(self),
-    room_info;
+    conn = new MockConn(self);
 
   agent.AgentConnection.call(self, agent_id, conn, null);
 
@@ -54,8 +55,21 @@ var FakeAgentConnection = function (r, agent_id) {
   self.perms = _.uniq(self.perms);
 
   self.room = r;
-  r.agents[self.id] = self;
-  self.bufs = r.bufs;
+};
+
+util.inherits(FakeAgentConnection, agent.AgentConnection);
+
+FakeAgentConnection.prototype.toString = function () {
+  var self = this;
+  return util.format("agent%s", self.id);
+};
+
+FakeAgentConnection.prototype.on_room_load = function () {
+  var self = this,
+    room_info;
+  self.room.agents[self.id] = self;
+
+  self.bufs = self.room.bufs;
 
   room_info = self.room.to_json();
   // add_agent munges agent.perms :/
@@ -67,13 +81,6 @@ var FakeAgentConnection = function (r, agent_id) {
   self.lag = 0;
   self.patch_events = [];
   self.room.broadcast("join", self, null, self.to_json());
-};
-
-util.inherits(FakeAgentConnection, agent.AgentConnection);
-
-FakeAgentConnection.prototype.toString = function () {
-  var self = this;
-  return util.format("agent%s", self.id);
 };
 
 FakeAgentConnection.prototype.log_buf = function () {

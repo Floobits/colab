@@ -4,10 +4,12 @@ var util = require("util");
 var log = require("floorine");
 var DMP = require("native-diff-match-patch");
 var _ = require("lodash");
+var fs = require("fs-extra");
 
 var room = require("room");
 var settings = require("settings");
 var utils = require("utils");
+var ldb = require("ldb");
 
 var mock = require("mock");
 
@@ -50,6 +52,9 @@ var verify = function (test, agents) {
 };
 
 var setup = function (cb) {
+  /*jslint stupid: true */
+  fs.mkdirsSync(ldb.get_db_path(-1));
+  /*jslint stupid: false */
   log.set_log_level("debug");
   r = new room.Room(-1, "fake_room", "fake_owner", {
     cur_fid: 0,
@@ -57,12 +62,22 @@ var setup = function (cb) {
   }, {
     workspaces: {},
     db: {
-      get: function (cb) {
-        return cb(1);
+      get: function (key, cb) {
+        if (key !== "version_-1") {
+          return cb("WTF wrong workspace ID");
+        }
+        return cb(null, 1);
       }
     }
   });
-  r.once("load", function () {
+
+  agent1 = new mock.FakeAgentConnection(r, ++agent_id);
+  agent2 = new mock.FakeAgentConnection(r, ++agent_id);
+
+  r.once("load", function (err) {
+    if (err) {
+      throw new Error(err);
+    }
     buf = new mock.buf.make_buffer(r, 0, "test.txt", "abc", undefined, true, "utf8");
     // Set this so the test doesn't hang for 90 seconds before exiting.
     buf.save_timeout = 1;
@@ -70,13 +85,16 @@ var setup = function (cb) {
     r.bufs[buf.id] = buf;
     r.tree_add_buf(buf);
 
-    agent1 = new mock.FakeAgentConnection(r, ++agent_id);
-    agent2 = new mock.FakeAgentConnection(r, ++agent_id);
+    agent1.on_room_load();
+    agent2.on_room_load();
 
     log.set_log_level("debug");
     cb();
   });
-  r.load();
+
+  r.load(agent1, {
+    createIfMissing: true,
+  });
 };
 
 var teardown = function (cb) {
