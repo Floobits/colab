@@ -17,6 +17,10 @@ var settings = require("settings");
 
 log.set_log_level("debug");
 
+DMP.set_Patch_DeleteThreshold(0.25);
+DMP.set_Match_Threshold(0.25);
+DMP.set_Match_Distance(100);
+
 var MockConn = function (agent) {
   var self = this;
   events.EventEmitter.call(self);
@@ -109,7 +113,9 @@ FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_afte
 
   result = DMP.patch_apply(patch_text, self.buf);
   if (utils.patched_cleanly(result) === false) {
-    log.error("Patch wasn't applied!", result, md5_before, md5_after);
+    log.error("%s Patch %s wasn't applied!", self.toString(), patch_text);
+    log.error("Result %s", result);
+    log.error("buf:", self.buf);
     return;
   }
   log.log(self.toString(), "patched from", self.buf, "to", result[0]);
