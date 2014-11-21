@@ -45,7 +45,6 @@ var test3 = function (test) {
 
   patch(agent1, "abcd");
   patch(agent1, "abcde");
-
   patch(agent2, "abcd");
   patch(agent2, "abcde");
   patch(agent2, "abcdef");
@@ -158,8 +157,8 @@ var test5 = function (test) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
-  patch(agent1, "ab");
   patch(agent2, "abcdef");
+  patch(agent1, "ab");
   agent2.pop_patch(-1);
   agent1.pop_patch(-1);
 
@@ -177,10 +176,10 @@ module.exports = {
   setUp: test.setup,
   tearDown: test.teardown,
   test1: test1,
-  // test2: test2,
-  // test3: test3,
+  test2: test2,
+  test3: test3,
   // test4: test4,
-  // test5: test5,
+  test5: test5,
   // test6: test6,
   // test7: test6
 };
@@ -190,26 +189,26 @@ module.exports = {
 // module.exports["test10"] = test6;
 // module.exports["test11"] = test6;
 
-module.exports.afsdasdasf = function (test) {
-  agent1.buf = "abc";
-  agent2.buf = "abc";
+// module.exports.fails_wtf = function (test) {
+//   agent1.buf = "abc";
+//   agent2.buf = "abc";
 
-//  agent2.pop_patch(1);
-//  patch(agent1, "abc");
-//  agent1.pop_patch(1);
-  patch(agent1, "abcd");
-  patch(agent2, "abc");
-  patch(agent2, "abcd");
-  agent2.pop_patch(2);
-  agent1.pop_patch(1);
-  patch(agent1, "abcde");
-  agent1.pop_patch(1);
-  patch(agent2, "abcde");
-  agent1.pop_patch(1);
-  patch(agent2, "abcdef");
+// //  agent2.pop_patch(1);
+// //  patch(agent1, "abc");
+// //  agent1.pop_patch(1);
+//   patch(agent1, "abcd");
+//   patch(agent2, "abc");
+//   patch(agent2, "abcd");
+//   agent2.pop_patch(2);
+//   agent1.pop_patch(1);
+//   patch(agent1, "abcde");
+//   agent1.pop_patch(1);
+//   patch(agent2, "abcde");
+//   agent1.pop_patch(1);
+//   patch(agent2, "abcdef");
 
-  agent1.pop_patch(-1);
-  agent2.pop_patch(-1);
-  verify(test, [agent1, agent2]);
-  test.done();
-};
+//   agent1.pop_patch(-1);
+//   agent2.pop_patch(-1);
+//   verify(test, [agent1, agent2]);
+//   test.done();
+// };

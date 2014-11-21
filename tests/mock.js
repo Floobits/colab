@@ -6,6 +6,8 @@ var util = require("util");
 var async = require("async");
 var log = require("floorine");
 var DMP = require("native-diff-match-patch");
+// var diff_match_patch = require('diff_match_patch');
+// var DMP = new diff_match_patch.diff_match_patch();
 var _ = require("lodash");
 
 var agent = require("agent");
@@ -16,6 +18,14 @@ var utils = require("utils");
 var settings = require("settings");
 
 log.set_log_level("debug");
+
+// DMP.Patch_DeleteThreshold = settings.dmp.Patch_DeleteThreshold;
+// DMP.Match_Threshold = settings.dmp.Match_Threshold;
+// DMP.Match_Distance = settings.dmp.Match_Distance;
+
+DMP.set_Patch_DeleteThreshold(settings.dmp.Patch_DeleteThreshold);
+DMP.set_Match_Threshold(settings.dmp.Match_Threshold);
+DMP.set_Match_Distance(settings.dmp.Match_Distance);
 
 var MockConn = function (agent) {
   var self = this;
@@ -105,11 +115,15 @@ FakeAgentConnection.prototype.pop_patch = function (count) {
 
 FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_after) {
   var self = this,
-    result;
+    result,
+    patches;
 
+  // patches = DMP.patch_fromText(patch_text);
   result = DMP.patch_apply(patch_text, self.buf);
   if (utils.patched_cleanly(result) === false) {
-    log.error("Patch wasn't applied!", result, md5_before, md5_after);
+    log.error("%s Patch %s wasn't applied!", self.toString(), patch_text);
+    log.error("Result %s", result);
+    log.error("buf:", self.buf);
     return;
   }
   log.log(self.toString(), "patched from", self.buf, "to", result[0]);
