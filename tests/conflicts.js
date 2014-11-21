@@ -96,7 +96,7 @@ var test3 = function (test) {
   // +e
   //  to agent2 text
   // agent2 text is <Buffer 61 62 63 64 65>
-  
+
   // found matching previous md5
   // applying patch [-1] from the past by agent1 from @@ -1,4 +1,5 @@
   //  abcd
@@ -122,12 +122,12 @@ var test3 = function (test) {
   //  to agent2 text
   // agent2 text is <Buffer 61 62 63 64 65 66>
   // found matching previous md5
-  
+
   // applying patch [-1] from the past by agent2 from @@ -1,5 +1,6 @@
   //  abcde
   // +e
   //  to abcdef text
-  
+
   // applying patch 3 @@ -1,6 +1,7 @@
   //  abcde
   // +f
