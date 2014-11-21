@@ -157,8 +157,8 @@ var test5 = function (test) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
-  patch(agent1, "ab");
   patch(agent2, "abcdef");
+  patch(agent1, "ab");
   agent2.pop_patch(-1);
   agent1.pop_patch(-1);
 
@@ -175,11 +175,11 @@ var test6 = function (test) {
 module.exports = {
   setUp: test.setup,
   tearDown: test.teardown,
-  // test1: test1,
-  // test2: test2,
+  test1: test1,
+  test2: test2,
   test3: test3,
   // test4: test4,
-  // test5: test5,
+  test5: test5,
   // test6: test6,
   // test7: test6
 };
@@ -189,7 +189,7 @@ module.exports = {
 // module.exports["test10"] = test6;
 // module.exports["test11"] = test6;
 
-// module.exports.afsdasdasf = function (test) {
+// module.exports.fails_wtf = function (test) {
 //   agent1.buf = "abc";
 //   agent2.buf = "abc";
 
