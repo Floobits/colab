@@ -56,6 +56,19 @@ var test3 = function (test) {
   test.done();
 };
 
+var test4 = function (test) {
+  agent1.buf = "abc";
+  agent2.buf = "abc";
+
+  patch(agent2, "abcdef");
+  patch(agent1, "ab");
+  agent2.pop_patch(-1);
+  agent1.pop_patch(-1);
+
+  verify(test, [agent1, agent2]);
+  test.done();
+};
+
 var permute_patches = function () {
   var args,
     test,
@@ -72,6 +85,8 @@ var permute_patches = function () {
     var agent = new mock.FakeAgentConnection(r, agent_id);
     agent._patches = agent_patches;
     agents[agent_id] = agent;
+
+    agent.on_room_load();
   });
 
   permute = function (agent1, agent2) {
@@ -137,28 +152,15 @@ var permute_patches = function () {
   verify(test, [agents[agent_id - 1], agents[agent_id]]);
 };
 
-var test4 = function (test) {
+var test5 = function (test) {
 
   permute_patches(test, ["abc", "abcde"], ["abc", "abcde"]);
 
-  // agent1.buf = "abc";
-  // agent2.buf = "abc";
-
-  // patch(agent1, "abcde");
-  // patch(agent2, "abcdef");
-  // agent2.pop_patch(-1);
-  // agent1.pop_patch(-1);
-
-  // verify(test, [agent1, agent2]);
-  test.done();
-};
-
-var test5 = function (test) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
+  patch(agent1, "abcde");
   patch(agent2, "abcdef");
-  patch(agent1, "ab");
   agent2.pop_patch(-1);
   agent1.pop_patch(-1);
 
@@ -178,9 +180,9 @@ module.exports = {
   test1: test1,
   test2: test2,
   test3: test3,
-  // test4: test4,
+  test4: test4,
   test5: test5,
-  // test6: test6,
+  test6: test6,
   // test7: test6
 };
 
