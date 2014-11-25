@@ -115,9 +115,13 @@ FakeAgentConnection.prototype.pop_patch = function (count) {
 
 FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_after) {
   var self = this,
-    result,
-    patches;
+    result;
 
+  if (utils.md5(self.buf) === md5_before) {
+    log.debug("md5_before %s OK", md5_before);
+  } else {
+    log.warn("md5_before should be %s but is %s", md5_before, utils.md5(self.buf));
+  }
   // patches = DMP.patch_fromText(patch_text);
   result = DMP.patch_apply(patch_text, self.buf);
   if (utils.patched_cleanly(result) === false) {
@@ -125,6 +129,11 @@ FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_afte
     log.error("Result %s", result);
     log.error("buf:", self.buf);
     return;
+  }
+  if (utils.md5(self.buf) !== md5_after) {
+    log.debug("md5_after %s OK", md5_after);
+  } else {
+    log.warn("md5_after should be %s but is %s", md5_after, utils.md5(self.buf));
   }
   log.log(self.toString(), "patched from", self.buf, "to", result[0]);
   self.buf = result[0];
