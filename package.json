@@ -12,7 +12,7 @@
     "diff_match_patch": "0.1.x",
     "express": "3.x",
     "floorine": "0.x",
-    "fs-extra": "0.13.x",
+    "fs-extra": "0.14.x",
     "heapdump": "0.3.x",
     "leveldown": "https://github.com/ggreer/node-leveldown/archive/dont_leak_options_attrs.tar.gz",
     "levelup": "0.x",
