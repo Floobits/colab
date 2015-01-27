@@ -1,0 +1,7 @@
+g++
+git
+make
+msmtp
+nodejs
+pkg-config
+runit

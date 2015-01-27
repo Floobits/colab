@@ -1,0 +1,27 @@
+{
+  "name": "floobits_colab_control",
+  "bin": "./bin/colabcontrol",
+  "repository": "https://github.com/Floobits/colabcontrol/",
+  "contributors": [
+    "Matt Kaniaris <mkaniaris@gmail.com>",
+    "Geoff Greer <geoff@greer.fm>"
+  ],
+  "version": "0.0.1",
+  "dependencies": {
+    "async": "0.9.x",
+    "express": "3.x",
+    "floorine": "0.x",
+    "lodash": "2.4.x",
+    "mc": "1.x",
+    "nodeunit": "0.9.x",
+    "pg": "4.x",
+    "request": "2.x"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "start": "./bin/colabcontrol",
+    "test": "NODE_PATH=lib:tests ./tests/run_tests"
+  }
+}
