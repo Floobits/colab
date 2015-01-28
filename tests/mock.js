@@ -77,7 +77,7 @@ FakeAgentHandler.prototype.toString = function () {
 FakeAgentHandler.prototype.on_room_load = function () {
   var self = this,
     room_info;
-  self.room.agents[self.id] = self;
+  self.room.handlers[self.id] = self;
 
   self.bufs = self.room.bufs;
 
