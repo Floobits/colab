@@ -7,4 +7,8 @@ jslint \
 --node true \
 --indent 2 \
 --nomen true \
-lib/*.js lib/master/*.js tests/*.js
+lib/*.js \
+lib/handler/*.js \
+lib/master/*.js \
+lib/slave/*.js \
+tests/*.js
