@@ -23,7 +23,7 @@
     "optimist": "0.6.x",
     "pg": "4.x",
     "request": "2.x",
-    "flukes": "0.1.0"
+    "flukes": "0.1.1"
   },
   "engines": {
     "node": ">=0.10.0"
