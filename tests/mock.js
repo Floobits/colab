@@ -10,7 +10,7 @@ var DMP = require("native-diff-match-patch");
 // var DMP = new diff_match_patch.diff_match_patch();
 var _ = require("lodash");
 
-var agent = require("agent");
+var AgentHandler = require("handler/agent");
 var buf = require("../lib/buffer");
 var room = require("room");
 var perms = require("perms");
@@ -47,7 +47,7 @@ var FakeAgentHandler = function (r, agent_id) {
   var self = this,
     conn = new MockConn(self);
 
-  agent.AgentHandler.call(self, agent_id, conn, null);
+  AgentHandler.call(self, agent_id, conn, null);
 
   clearTimeout(self.auth_timeout_id);
   self.auth_timeout_id = null;
@@ -67,7 +67,7 @@ var FakeAgentHandler = function (r, agent_id) {
   self.room = r;
 };
 
-util.inherits(FakeAgentHandler, agent.AgentHandler);
+util.inherits(FakeAgentHandler, AgentHandler);
 
 FakeAgentHandler.prototype.toString = function () {
   var self = this;
