@@ -14,12 +14,12 @@
     "floorine": "0.x",
     "fs-extra": "0.14.x",
     "heapdump": "0.3.x",
-    "leveldown": "https://github.com/ggreer/node-leveldown/archive/dont_leak_options_attrs.tar.gz",
-    "levelup": "0.x",
-    "lodash": "2.4.x",
+    "leveldown": "1.x",
+    "levelup": "https://codeload.github.com/ggreer/node-levelup/tar.gz/1.0.0-wip",
+    "lodash": "3.1.x",
     "mc": "1.x",
     "mime-types": "2.0.x",
-    "native-diff-match-patch": "0.1.x",
+    "native-diff-match-patch": "0.2.x",
     "nodeunit": "0.9.x",
     "optimist": "0.6.x",
     "pg": "4.x",
@@ -27,7 +27,7 @@
     "flukes": "0.1.x"
   },
   "engines": {
-    "node": ">=0.10.0"
+    "node": ">=0.12.0"
   },
   "scripts": {
     "start": "./bin/colab",
