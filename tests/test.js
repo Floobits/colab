@@ -71,8 +71,8 @@ var setup = function (cb) {
     }
   });
 
-  agent1 = new mock.FakeAgentConnection(r, ++agent_id);
-  agent2 = new mock.FakeAgentConnection(r, ++agent_id);
+  agent1 = new mock.FakeAgentHandler(r, ++agent_id);
+  agent2 = new mock.FakeAgentHandler(r, ++agent_id);
 
   r.once("load", function (err) {
     if (err) {

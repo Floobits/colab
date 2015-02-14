@@ -82,7 +82,7 @@ var permute_patches = function () {
 
   _.each(agents_patches, function (agent_patches) {
     agent_id++;
-    var agent = new mock.FakeAgentConnection(r, agent_id);
+    var agent = new mock.FakeAgentHandler(r, agent_id);
     agent._patches = agent_patches;
     agents[agent_id] = agent;
 

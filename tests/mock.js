@@ -10,7 +10,7 @@ var DMP = require("native-diff-match-patch");
 // var DMP = new diff_match_patch.diff_match_patch();
 var _ = require("lodash");
 
-var agent = require("agent");
+var AgentHandler = require("handler/agent");
 var buf = require("../lib/buffer");
 var room = require("room");
 var perms = require("perms");
@@ -43,11 +43,11 @@ MockConn.prototype.write = function (name, req_id, data) {
 };
 
 
-var FakeAgentConnection = function (r, agent_id) {
+var FakeAgentHandler = function (r, agent_id) {
   var self = this,
     conn = new MockConn(self);
 
-  agent.AgentConnection.call(self, agent_id, conn, null);
+  AgentHandler.call(self, agent_id, conn, null);
 
   clearTimeout(self.auth_timeout_id);
   self.auth_timeout_id = null;
@@ -67,17 +67,17 @@ var FakeAgentConnection = function (r, agent_id) {
   self.room = r;
 };
 
-util.inherits(FakeAgentConnection, agent.AgentConnection);
+util.inherits(FakeAgentHandler, AgentHandler);
 
-FakeAgentConnection.prototype.toString = function () {
+FakeAgentHandler.prototype.toString = function () {
   var self = this;
   return util.format("agent%s", self.id);
 };
 
-FakeAgentConnection.prototype.on_room_load = function () {
+FakeAgentHandler.prototype.on_room_load = function () {
   var self = this,
     room_info;
-  self.room.agents[self.id] = self;
+  self.room.handlers[self.id] = self;
 
   self.bufs = self.room.bufs;
 
@@ -93,12 +93,12 @@ FakeAgentConnection.prototype.on_room_load = function () {
   self.room.broadcast("join", self, null, self.to_json());
 };
 
-FakeAgentConnection.prototype.log_buf = function () {
+FakeAgentHandler.prototype.log_buf = function () {
   var self = this;
   log.log(self.toString(), "buf is", self.buf);
 };
 
-FakeAgentConnection.prototype.pop_patch = function (count) {
+FakeAgentHandler.prototype.pop_patch = function (count) {
   var self = this,
     data;
 
@@ -113,7 +113,7 @@ FakeAgentConnection.prototype.pop_patch = function (count) {
   }
 };
 
-FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_after) {
+FakeAgentHandler.prototype.patch = function (patch_text, md5_before, md5_after) {
   var self = this,
     result;
 
@@ -139,7 +139,7 @@ FakeAgentConnection.prototype.patch = function (patch_text, md5_before, md5_afte
   self.buf = result[0];
 };
 
-FakeAgentConnection.prototype.write = function (name, req_id, data) {
+FakeAgentHandler.prototype.write = function (name, req_id, data) {
   var self = this;
 
   self.conn.write(name, req_id, data);
@@ -159,6 +159,6 @@ buf.BaseBuffer.prototype.save = function (create, cb) {
 
 
 module.exports = {
-  FakeAgentConnection: FakeAgentConnection,
+  FakeAgentHandler: FakeAgentHandler,
   buf: buf
 };
