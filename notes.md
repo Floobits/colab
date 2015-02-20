@@ -21,13 +21,17 @@ TODO
 prune script (for deleting workspaces that were deleted when a server was down)
 
 
+test creating users from editor
+pull from github repo
+test with intellij (tls cipher suites may differ)
+
 Upgrade notes:
 
 before:
 
-    wget https://iojs.org/dist/v1.2.0/iojs-v1.2.0.tar.gz
-    tar xzf iojs-v1.2.0.tar.gz
-    cd iojs-v1.2.0/
+    wget https://iojs.org/dist/v1.3.0/iojs-v1.3.0.tar.gz
+    tar xzf iojs-v1.3.0.tar.gz
+    cd iojs-v1.3.0/
     ./configure
     make
 
@@ -42,7 +46,7 @@ remove legacy node js stuff:
 
 install iojs 1.2 on everything
 
-    cd iojs-v1.2.0/
+    cd iojs-v1.3.0/
     sudo make install
     sudo npm update -g
 
