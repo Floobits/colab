@@ -1,4 +1,7 @@
+/*jslint node: true */
 /*global agent_id: true, r: true, agent1: true, agent2: true */
+"use strict";
+
 var log = require("floorine");
 var _ = require("lodash");
 
@@ -183,9 +186,9 @@ module.exports = {
   test4: test4,
   // The following tests sometimes fail (permute_patches is not deterministic)
   // TODO: fix the edge cases where they fail
-  // test5: test5,
-  // test6: test6,
-  // test7: test6
+  test5: test5,
+  test6: test6,
+  test7: test6
 };
 
 // module.exports["test8"] = test6;

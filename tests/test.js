@@ -1,4 +1,6 @@
+/*jslint node: true */
 /*global agent_id: true, r: true, agent1: true, agent2: true */
+"use strict";
 var util = require("util");
 
 var log = require("floorine");
