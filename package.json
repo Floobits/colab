@@ -29,6 +29,9 @@
     "pg": "4.x",
     "request": "2.x"
   },
+  "devDependencies": {
+    "eslint": "0.x"
+  },
   "engines": {
     "node": ">=0.12.0"
   },
