@@ -96,40 +96,40 @@ var permute_patches = function () {
     agent.on_room_load();
   });
 
-  permute = function (agent1, agent2) {
+  permute = function (a1, a2) {
     var permute_ops = [],
       choice,
       patch_obj,
       pop_agent1,
       pop_agent2;
 
-    agent1._remaining_patches = _.clone(agent1._patches);
-    agent2._remaining_patches = _.clone(agent2._patches);
+    a1._remaining_patches = _.clone(a1._patches);
+    a2._remaining_patches = _.clone(a2._patches);
 
     pop_agent1 = function () {
-      agent1.pop_patch(1);
+      a1.pop_patch(1);
     };
     pop_agent2 = function () {
-      agent2.pop_patch(1);
+      a2.pop_patch(1);
     };
 
-    while (agent1._remaining_patches.length > 0 || agent2._remaining_patches.length > 0) {
+    while (a1._remaining_patches.length > 0 || a2._remaining_patches.length > 0) {
       choice = Math.floor(Math.random() * 4);
       switch (choice) {
       case 0:
-        if (agent1._remaining_patches.length > 0) {
-          patch_obj = agent1._remaining_patches[0];
+        if (a1._remaining_patches.length > 0) {
+          patch_obj = a1._remaining_patches[0];
           log.debug("agent1 patch:", patch_obj);
-          agent1._remaining_patches = agent1._remaining_patches.slice(1);
-          permute_ops.push(patch.bind(null, agent1, patch_obj));
+          a1._remaining_patches = a1._remaining_patches.slice(1);
+          permute_ops.push(patch.bind(null, a1, patch_obj));
         }
         break;
       case 1:
-        if (agent2._remaining_patches.length > 0) {
-          patch_obj = agent2._remaining_patches[0];
+        if (a2._remaining_patches.length > 0) {
+          patch_obj = a2._remaining_patches[0];
           log.debug("agent2 patch:", patch_obj);
-          agent2._remaining_patches = agent2._remaining_patches.slice(1);
-          permute_ops.push(patch.bind(null, agent2, patch_obj));
+          a2._remaining_patches = a2._remaining_patches.slice(1);
+          permute_ops.push(patch.bind(null, a2, patch_obj));
         }
         break;
       case 2:
@@ -146,10 +146,10 @@ var permute_patches = function () {
     }
 
     permute_ops.push(function () {
-      agent1.pop_patch(-1);
+      a1.pop_patch(-1);
     });
     permute_ops.push(function () {
-      agent2.pop_patch(-1);
+      a2.pop_patch(-1);
     });
     return permute_ops;
   };
