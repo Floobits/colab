@@ -53,9 +53,9 @@ function verify(test, agents) {
 }
 
 function setup(cb) {
-  /*jslint stupid: true */
+  /*eslint-disable no-sync */
   fs.mkdirsSync(ldb.get_db_path(-1));
-  /*jslint stupid: false */
+  /*eslint-enable no-sync */
   log.set_log_level("debug");
   r = new room.Room(-1, "fake_room", "fake_owner", {
     cur_fid: 0,
