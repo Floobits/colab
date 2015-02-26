@@ -1,5 +1,4 @@
 /*jslint node: true */
-/*global agent_id: true, r: true, agent1: true, agent2: true */
 "use strict";
 
 var log = require("floorine");
@@ -9,7 +8,11 @@ var mock = require("mock");
 var test = require("test");
 
 var patch = test.patch,
-  verify = test.verify;
+  verify = test.verify,
+  agent1 = test.agent1,
+  agent2 = test.agent2,
+  agent_id = test.agent_id,
+  r = test.r;
 
 
 var test1 = function (t) {

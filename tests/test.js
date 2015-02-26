@@ -1,5 +1,4 @@
 /*jslint node: true */
-/*global agent_id: true, r: true, agent1: true, agent2: true */
 "use strict";
 var util = require("util");
 
@@ -16,10 +15,11 @@ var ldb = require("ldb");
 var mock = require("mock");
 
 var buf;
+var agent_id = 0;
+var r;
+var agent1, agent2;
 
 log.set_log_level("debug");
-agent_id = 0;
-
 settings.bufs_dir = "/tmp/colab_test";
 
 
@@ -103,7 +103,12 @@ function teardown(cb) {
 }
 
 module.exports = {
+  agent1: agent1,
+  agent2: agent2,
+  agent_id: agent_id,
+  buf: buf,
   patch: patch,
+  r: r,
   setup: setup,
   teardown: teardown,
   verify: verify,
