@@ -1,4 +1,10 @@
 {
+  "ecmaFeatures": {
+    "arrowFunctions": true,
+    "blockBindings": true,
+    "generators": true,
+    "templateStrings": true
+  },
   "env": {
     "node": true
   },
@@ -12,7 +18,7 @@
     "no-comma-dangle": [0, false],
     "no-nested-ternary": [2, true],
     "no-self-compare": [2, true],
-    "no-sync": [2, true],
+    "no-sync": [1, true],
     "no-underscore-dangle": [1, false],
     "no-throw-literal": [2, true],
     "no-void": [2, true],
