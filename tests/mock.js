@@ -16,6 +16,9 @@ var perms = require("perms");
 var utils = require("utils");
 var settings = require("settings");
 
+var MockConn,
+  FakeAgentHandler;
+
 log.set_log_level("debug");
 
 // DMP.Patch_DeleteThreshold = settings.dmp.Patch_DeleteThreshold;
@@ -26,7 +29,7 @@ DMP.set_Patch_DeleteThreshold(settings.dmp.Patch_DeleteThreshold);
 DMP.set_Match_Threshold(settings.dmp.Match_Threshold);
 DMP.set_Match_Distance(settings.dmp.Match_Distance);
 
-var MockConn = function (agent) {
+MockConn = function (agent) {
   var self = this;
   events.EventEmitter.call(self);
   self.agent = agent;
@@ -42,7 +45,7 @@ MockConn.prototype.write = function (name, req_id, data) {
 };
 
 
-var FakeAgentHandler = function (r, agent_id) {
+FakeAgentHandler = function (r, agent_id) {
   var self = this,
     conn = new MockConn(self);
 
@@ -58,8 +61,8 @@ var FakeAgentHandler = function (r, agent_id) {
   self.authenticated = true;
   self.user_id = -1;
   self.perms = [];
-  _.each(perms.db_perms_mapping, function (perms) {
-    self.perms = self.perms.concat(perms);
+  _.each(perms.db_perms_mapping, function (perm_map) {
+    self.perms = self.perms.concat(perm_map);
   });
   self.perms = _.uniq(self.perms);
 

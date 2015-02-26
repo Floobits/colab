@@ -12,7 +12,7 @@ var patch = test.patch,
   verify = test.verify;
 
 
-var test1 = function (test) {
+var test1 = function (t) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
@@ -23,11 +23,11 @@ var test1 = function (test) {
   agent2.pop_patch(-1);
   agent1.pop_patch(-1);
 
-  verify(test, [agent1, agent2]);
-  test.done();
+  verify(t, [agent1, agent2]);
+  t.done();
 };
 
-var test2 = function (test) {
+var test2 = function (t) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
@@ -38,11 +38,11 @@ var test2 = function (test) {
   agent2.pop_patch(-1);
   agent1.pop_patch(-1);
 
-  verify(test, [agent1, agent2]);
-  test.done();
+  verify(t, [agent1, agent2]);
+  t.done();
 };
 
-var test3 = function (test) {
+var test3 = function (t) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
@@ -55,11 +55,11 @@ var test3 = function (test) {
   agent2.pop_patch(-1);
   agent1.pop_patch(-1);
 
-  verify(test, [agent1, agent2]);
-  test.done();
+  verify(t, [agent1, agent2]);
+  t.done();
 };
 
-var test4 = function (test) {
+var test4 = function (t) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
@@ -68,24 +68,25 @@ var test4 = function (test) {
   agent2.pop_patch(-1);
   agent1.pop_patch(-1);
 
-  verify(test, [agent1, agent2]);
-  test.done();
+  verify(t, [agent1, agent2]);
+  t.done();
 };
 
 var permute_patches = function () {
   var args,
-    test,
+    t,
     agents = {},
     agents_patches,
     permute,
     ops;
   args = Array.prototype.slice.call(arguments);
-  test = args[0];
+  t = args[0];
   agents_patches = args.slice(1);
 
   _.each(agents_patches, function (agent_patches) {
+    var agent;
     agent_id++;
-    var agent = new mock.FakeAgentHandler(r, agent_id);
+    agent = new mock.FakeAgentHandler(r, agent_id);
     agent._patches = agent_patches;
     agents[agent_id] = agent;
 
@@ -93,14 +94,14 @@ var permute_patches = function () {
   });
 
   permute = function (agent1, agent2) {
-    agent1._remaining_patches = _.clone(agent1._patches);
-    agent2._remaining_patches = _.clone(agent2._patches);
-
     var permute_ops = [],
       choice,
       patch_obj,
       pop_agent1,
       pop_agent2;
+
+    agent1._remaining_patches = _.clone(agent1._patches);
+    agent2._remaining_patches = _.clone(agent2._patches);
 
     pop_agent1 = function () {
       agent1.pop_patch(1);
@@ -136,6 +137,8 @@ var permute_patches = function () {
         log.debug("agent2 pop patch");
         permute_ops.push(pop_agent2);
         break;
+      default:
+        throw new Error("Unknown op! This should never happen!");
       }
     }
 
@@ -152,12 +155,12 @@ var permute_patches = function () {
   _.each(ops, function (op) {
     op();
   });
-  verify(test, [agents[agent_id - 1], agents[agent_id]]);
+  verify(t, [agents[agent_id - 1], agents[agent_id]]);
 };
 
-var test5 = function (test) {
+var test5 = function (t) {
 
-  permute_patches(test, ["abc", "abcde"], ["abc", "abcde"]);
+  permute_patches(t, ["abc", "abcde"], ["abc", "abcde"]);
 
   agent1.buf = "abc";
   agent2.buf = "abc";
@@ -167,13 +170,13 @@ var test5 = function (test) {
   agent2.pop_patch(-1);
   agent1.pop_patch(-1);
 
-  verify(test, [agent1, agent2]);
-  test.done();
+  verify(t, [agent1, agent2]);
+  t.done();
 };
 
-var test6 = function (test) {
-  permute_patches(test, ["abc", "abcd", "abcde"], ["abc", "abcd", "abcde", "abcdef"]);
-  test.done();
+var test6 = function (t) {
+  permute_patches(t, ["abc", "abcd", "abcde"], ["abc", "abcd", "abcde", "abcdef"]);
+  t.done();
 };
 
 

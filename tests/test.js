@@ -15,16 +15,15 @@ var ldb = require("ldb");
 
 var mock = require("mock");
 
-log.set_log_level("debug");
-
 var buf;
-agent_id = 0;
 
+log.set_log_level("debug");
+agent_id = 0;
 
 settings.bufs_dir = "/tmp/colab_test";
 
 
-var patch = function (agent, after) {
+function patch(agent, after) {
   var before,
     md5_before,
     md5_after,
@@ -43,17 +42,17 @@ var patch = function (agent, after) {
   agent.buf = after;
   buf.patch(agent, null, patches, md5_before, md5_after);
   log.log("buf state is", buf._state);
-};
+}
 
-var verify = function (test, agents) {
+function verify(test, agents) {
   log.log("buf is", buf._state);
   _.each(agents, function (agent) {
     test.strictEqual(buf._state.toString(), agent.buf, util.format("agent %s does not match!", agent.toString()));
   });
   console.log("\n------------------------------\n");
-};
+}
 
-var setup = function (cb) {
+function setup(cb) {
   /*jslint stupid: true */
   fs.mkdirsSync(ldb.get_db_path(-1));
   /*jslint stupid: false */
@@ -64,11 +63,11 @@ var setup = function (cb) {
   }, {
     workspaces: {},
     db: {
-      get: function (key, cb) {
+      get: function (key, get_cb) {
         if (key !== "version_-1") {
-          return cb("WTF wrong workspace ID");
+          return get_cb("WTF wrong workspace ID");
         }
-        return cb(null, 1);
+        return get_cb(null, 1);
       }
     }
   });
@@ -80,7 +79,7 @@ var setup = function (cb) {
     if (err) {
       throw new Error(err);
     }
-    buf = new mock.buf.make_buffer(r, 0, "test.txt", "abc", undefined, true, "utf8");
+    buf = mock.buf.make(r, 0, "test.txt", "abc", undefined, true, "utf8");
     // Set this so the test doesn't hang for 90 seconds before exiting.
     buf.save_timeout = 1;
 
@@ -97,15 +96,15 @@ var setup = function (cb) {
   r.load(agent1, {
     createIfMissing: true,
   });
-};
+}
 
-var teardown = function (cb) {
+function teardown(cb) {
   cb();
-};
+}
 
 module.exports = {
+  patch: patch,
   setup: setup,
   teardown: teardown,
-  patch: patch,
-  verify: verify
+  verify: verify,
 };
