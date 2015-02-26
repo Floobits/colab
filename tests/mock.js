@@ -1,9 +1,9 @@
+/*jslint node: true */
+"use strict";
+
 var events = require("events");
-var fs = require("fs");
-var path = require("path");
 var util = require("util");
 
-var async = require("async");
 var log = require("floorine");
 var DMP = require("native-diff-match-patch");
 // var diff_match_patch = require('diff_match_patch');
@@ -12,7 +12,6 @@ var _ = require("lodash");
 
 var AgentHandler = require("handler/agent");
 var buf = require("../lib/buffer");
-var room = require("room");
 var perms = require("perms");
 var utils = require("utils");
 var settings = require("settings");
