@@ -8,6 +8,9 @@ options:
   dm-crypt
 
 streaming replication instead of periodic snapshotting
+  do normal replication using colab protocol instead of http
+  instead of doing get_bufs, join workspace & apply patches
+  allow multiplexing of workspaces over one connection
 
 use symlink trick so that these are atomic
 if workspace is active, NEVER update from another colab server
@@ -19,3 +22,4 @@ what to do when in the middle of fetching from another colab but someone connect
 
 TODO
 prune script (for deleting workspaces that were deleted when a server was down)
+  (or master could just do this)
