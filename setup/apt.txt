@@ -4,7 +4,6 @@ libqt4-dev
 make
 mercurial
 msmtp
-nodejs
 pkg-config
 runit
 subversion
