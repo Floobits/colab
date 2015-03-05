@@ -9,7 +9,8 @@ fi
 TARBALL=$1
 RELEASE_NAME=$(basename "$TARBALL")
 RELEASE_NAME="${RELEASE_NAME%%.*}"
-RELEASE_DIR="/data/releases/$RELEASE_NAME"
+RELEASE_BASE="/data/releases"
+RELEASE_DIR="$RELEASE_BASE/$RELEASE_NAME"
 
 mkdir $RELEASE_DIR && \
 tar xzf $TARBALL --directory $RELEASE_DIR && \
@@ -21,3 +22,11 @@ ln -s -f $RELEASE_DIR /data/colab-new && \
 mv -T -f /data/colab-new /data/colab && \
 sv restart /service/colab && \
 echo "Successfully updated to $RELEASE_NAME"
+
+# Remove all but the last 5 releases
+OLD_RELEASES=`ls -t -1 $RELEASE_BASE | grep -F "$RELEASE_NAME-" | sed -e '1,5d'`
+for OLD_RELEASE in $OLD_RELEASES
+do
+  echo "Removing old release: $RELEASE_BASE/$OLD_RELEASE"
+  rm -fr "$RELEASE_BASE/$OLD_RELEASE"
+done
