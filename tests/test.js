@@ -57,7 +57,9 @@ function setup(cb) {
   fs.mkdirsSync(ldb.get_db_path(-1));
   /*eslint-enable no-sync */
   log.set_log_level("debug");
-  r = new room.Room(-1, "fake_room", "fake_owner", {
+  r = new room.Room(-1, {
+    name: "fake_room",
+    owner: "fake_owner",
     cur_fid: 0,
     max_size: 2147483647,
   }, {
