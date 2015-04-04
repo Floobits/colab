@@ -21,7 +21,6 @@
     "leveldown": "1.x",
     "levelup": "https://codeload.github.com/ggreer/node-levelup/tar.gz/1.0.0-wip",
     "lodash": "3.x",
-    "mc": "1.x",
     "mime-types": "2.0.x",
     "morgan": "1.5.x",
     "native-diff-match-patch": "0.2.x",
