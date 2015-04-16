@@ -29,7 +29,7 @@ do
   scp -C $TARBALL $HOST:/tmp
   scp ./upgrade.sh $HOST:/tmp/upgrade_$RELEASE_NAME.sh
 
-  ssh $HOST "sudo /tmp/upgrade_$RELEASE_NAME.sh /tmp/$TARBALL" &
+  ssh $HOST "sudo /tmp/upgrade_$RELEASE_NAME.sh /tmp/$TARBALL"
 
   if [ $? -eq 0 ]
   then
