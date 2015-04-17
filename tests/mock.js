@@ -82,7 +82,7 @@ FakeAgentHandler.prototype.on_room_load = function () {
 
   self.bufs = self.room.bufs;
 
-  room_info = self.room.to_json();
+  room_info = self.room.room_info();
   // add_agent munges agent.perms :/
   room_info.perms = self.perms;
 
