@@ -20,7 +20,6 @@
     "heapdump": "0.3.x",
     "leveldown": "1.x",
     "levelup": "1.0.0-2",
-    "level-ws": "0.x",
     "lodash": "3.x",
     "mime-types": "2.0.x",
     "morgan": "1.5.x",
