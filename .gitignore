@@ -1,5 +1,6 @@
 *.pyc
 .DS_Store
+.floo
 .idea
 .sublime-project
 colab-*.tar.gz
