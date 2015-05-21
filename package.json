@@ -8,7 +8,7 @@
   ],
   "version": "0.0.2",
   "dependencies": {
-    "async": "0.9.x",
+    "async": "1.x",
     "basic-auth": "1.x",
     "body-parser": "1.12.x",
     "diff_match_patch": "0.1.x",
