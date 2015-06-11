@@ -3,6 +3,7 @@
     "arrowFunctions": true,
     "blockBindings": true,
     "generators": true,
+    "objectLiteralShorthandProperties": true,
     "templateStrings": true
   },
   "env": {
