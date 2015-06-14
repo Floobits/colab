@@ -1,22 +1,19 @@
 "use strict";
 
-var events = require("events");
-var util = require("util");
+const events = require("events");
+const util = require("util");
 
-var log = require("floorine");
-var DMP = require("native-diff-match-patch");
-// var diff_match_patch = require('diff_match_patch');
-// var DMP = new diff_match_patch.diff_match_patch();
-var _ = require("lodash");
+const log = require("floorine");
+const DMP = require("native-diff-match-patch");
+// const diff_match_patch = require('diff_match_patch');
+// const DMP = new diff_match_patch.diff_match_patch();
+const _ = require("lodash");
 
-var AgentHandler = require("handler/agent");
-var buf = require("../lib/buffer");
-var perms = require("perms");
-var utils = require("utils");
-var settings = require("settings");
-
-var MockConn,
-  FakeAgentHandler;
+const AgentHandler = require("handler/agent");
+const buf = require("../lib/buffer");
+const perms = require("perms");
+const utils = require("utils");
+const settings = require("settings");
 
 log.set_log_level("debug");
 
@@ -28,7 +25,7 @@ DMP.set_Patch_DeleteThreshold(settings.dmp.Patch_DeleteThreshold);
 DMP.set_Match_Threshold(settings.dmp.Match_Threshold);
 DMP.set_Match_Distance(settings.dmp.Match_Distance);
 
-MockConn = function (agent) {
+const MockConn = function (agent) {
   var self = this;
   events.EventEmitter.call(self);
   self.agent = agent;
@@ -44,7 +41,7 @@ MockConn.prototype.write = function (name, req_id, data) {
 };
 
 
-FakeAgentHandler = function (r, agent_id) {
+const FakeAgentHandler = function (r, agent_id) {
   var self = this,
     conn = new MockConn(self);
 
@@ -153,13 +150,13 @@ FakeAgentHandler.prototype.write = function (name, req_id, data) {
 };
 
 
-buf.BaseBuffer.prototype.save = function (create, cb) {
-  log.debug("save create: %s", create);
+buf.BaseBuffer.prototype.save = function (force, cb) {
+  log.debug("save force: %s", force);
   cb();
 };
 
 
 module.exports = {
-  FakeAgentHandler: FakeAgentHandler,
-  buf: buf
+  buf,
+  FakeAgentHandler,
 };
