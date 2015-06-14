@@ -21,8 +21,8 @@
     "leveldown": "1.2.x",
     "levelup": "1.2.x",
     "lodash": "3.x",
-    "mime-types": "2.0.x",
-    "morgan": "1.5.x",
+    "mime-types": "2.1.x",
+    "morgan": "1.6.x",
     "native-diff-match-patch": "0.2.x",
     "nodeunit": "0.9.x",
     "request": "2.x"
