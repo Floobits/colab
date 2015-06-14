@@ -1,10 +1,5 @@
 #!/usr/bin/env node
+"use strict";
 
-var reporter = require("nodeunit").reporters.default;
-
-process.on("uncaughtException", function (err) {
-  console.error(err.stack);
-  process.exit(1);
-});
-
+const reporter = require("nodeunit").reporters.default;
 reporter.run(["tests/conflicts.js"]);

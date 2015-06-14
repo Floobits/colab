@@ -1,12 +1,12 @@
 "use strict";
 
-var log = require("floorine");
-var _ = require("lodash");
+const log = require("floorine");
+const _ = require("lodash");
 
-var mock = require("mock");
-var test = require("test");
+const mock = require("mock");
+const test = require("test");
 
-var patch = test.patch,
+const patch = test.patch,
   verify = test.verify,
   agent1 = test.agent1,
   agent2 = test.agent2,
@@ -14,7 +14,7 @@ var patch = test.patch,
   r = test.r;
 
 
-var test1 = function (t) {
+function test1(t) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
@@ -27,9 +27,9 @@ var test1 = function (t) {
 
   verify(t, [agent1, agent2]);
   t.done();
-};
+}
 
-var test2 = function (t) {
+function test2(t) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
@@ -42,9 +42,9 @@ var test2 = function (t) {
 
   verify(t, [agent1, agent2]);
   t.done();
-};
+}
 
-var test3 = function (t) {
+function test3(t) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
@@ -59,9 +59,9 @@ var test3 = function (t) {
 
   verify(t, [agent1, agent2]);
   t.done();
-};
+}
 
-var test4 = function (t) {
+function test4(t) {
   agent1.buf = "abc";
   agent2.buf = "abc";
 
@@ -72,9 +72,9 @@ var test4 = function (t) {
 
   verify(t, [agent1, agent2]);
   t.done();
-};
+}
 
-var permute_patches = function () {
+function permute_patches() {
   var args,
     t,
     agents = {},
@@ -158,10 +158,9 @@ var permute_patches = function () {
     op();
   });
   verify(t, [agents[agent_id - 1], agents[agent_id]]);
-};
+}
 
-var test5 = function (t) {
-
+function test5(t) {
   permute_patches(t, ["abc", "abcde"], ["abc", "abcde"]);
 
   agent1.buf = "abc";
@@ -174,12 +173,12 @@ var test5 = function (t) {
 
   verify(t, [agent1, agent2]);
   t.done();
-};
+}
 
-var test6 = function (t) {
+function test6(t) {
   permute_patches(t, ["abc", "abcd", "abcde"], ["abc", "abcd", "abcde", "abcdef"]);
   t.done();
-};
+}
 
 
 module.exports = {
