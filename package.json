@@ -35,7 +35,7 @@
   },
   "scripts": {
     "start": "./bin/colab",
-    "test": "NODE_PATH=lib:tests ./tests/run_tests",
+    "test": "./tests/run_tests",
     "lint": "./node_modules/eslint/bin/eslint.js lib/*.js lib/handler/*.js lib/master/*.js lib/protocol/*.js lib/slave/*.js tests/*.js"
   }
 }

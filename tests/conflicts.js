@@ -3,10 +3,10 @@
 const log = require("floorine");
 const _ = require("lodash");
 
-const mock = require("mock");
-const test = require("test");
+const mock = require("./mock");
+const test = require("./test");
 
-const patch = test.patch,
+let patch = test.patch,
   verify = test.verify,
   agent1 = test.agent1,
   agent2 = test.agent2,

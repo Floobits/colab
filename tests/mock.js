@@ -9,11 +9,11 @@ const DMP = require("native-diff-match-patch");
 // const DMP = new diff_match_patch.diff_match_patch();
 const _ = require("lodash");
 
-const AgentHandler = require("handler/agent");
-const FloobitsProtocol = require("protocol/floobits");
-const perms = require("perms");
-const utils = require("utils");
-const settings = require("settings");
+const AgentHandler = require("../lib/handler/agent");
+const FloobitsProtocol = require("../lib/protocol/floobits");
+const perms = require("../lib/perms");
+const utils = require("../lib/utils");
+const settings = require("../lib/settings");
 
 log.set_log_level("debug");
 
@@ -63,13 +63,12 @@ FakeAgentHandler.prototype.toString = function () {
 };
 
 FakeAgentHandler.prototype.on_room_load = function () {
-  var self = this,
-    room_info;
-  self.room.handlers[self.id] = self;
+  const self = this;
 
+  self.room.handlers[self.id] = self;
   self.bufs = self.room.bufs;
 
-  room_info = self.room.room_info();
+  let room_info = self.room.room_info();
   // add_agent munges agent.perms :/
   room_info.perms = self.perms;
 
