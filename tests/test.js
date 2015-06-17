@@ -1,41 +1,48 @@
 "use strict";
-var util = require("util");
+const util = require("util");
 
-var log = require("floorine");
-var DMP = require("native-diff-match-patch");
-var _ = require("lodash");
-var fs = require("fs-extra");
+const log = require("floorine");
+const DMP = require("native-diff-match-patch");
+const _ = require("lodash");
+const fs = require("fs-extra");
 
-var room = require("room");
-var settings = require("settings");
-var utils = require("utils");
-var ldb = require("ldb");
+const room = require("room");
+const buffer = require("../lib/buffer");
+const settings = require("settings");
+const utils = require("utils");
+const ldb = require("ldb");
 
-var mock = require("mock");
+const mock = require("mock");
 
-var buf;
-var agent_id = 0;
-var r;
-var agent1, agent2;
+process.on("uncaughtException", function (err) {
+  console.error("Error:");
+  console.error(err);
+  console.error("Stack:");
+  console.error(err.stack);
+  /*eslint-disable no-process-exit */
+  process.exit(1);
+  /*eslint-enable no-process-exit */
+});
+
+let buf;
+let agent_id = 0;
+let r;
+let agent1;
+let agent2;
 
 log.set_log_level("debug");
 settings.bufs_dir = "/tmp/colab_test";
 
 
 function patch(agent, after) {
-  var before,
-    md5_before,
-    md5_after,
-    patches;
-
-  before = agent.buf;
+  let before = agent.buf;
   if (buf.encoding === "utf8") {
     before = before.toString();
   }
 
-  md5_before = utils.md5(before);
-  md5_after = utils.md5(after);
-  patches = DMP.patch_make(before, after);
+  const md5_before = utils.md5(before);
+  const md5_after = utils.md5(after);
+  const patches = DMP.patch_make(before, after);
 
   log.log(agent.toString(), "sending patch from", agent.buf, "to", after);
   agent.buf = after;
@@ -73,14 +80,14 @@ function setup(cb) {
     }
   });
 
-  agent1 = new mock.FakeAgentHandler(r, ++agent_id);
-  agent2 = new mock.FakeAgentHandler(r, ++agent_id);
+  agent1 = mock.makeAgent(r, ++agent_id);
+  agent2 = mock.makeAgent(r, ++agent_id);
 
   r.once("load", function (err) {
     if (err) {
       throw new Error(err);
     }
-    buf = mock.buf.make(r, 0, "test.txt", "abc", undefined, true, "utf8");
+    buf = buffer.make(r, 0, "test.txt", "abc", utils.md5("abc"), true, "utf8");
     // Set this so the test doesn't hang for 90 seconds before exiting.
     buf.save_timeout = 1;
 
@@ -90,7 +97,6 @@ function setup(cb) {
     agent1.on_room_load();
     agent2.on_room_load();
 
-    log.set_log_level("debug");
     cb();
   });
 
@@ -100,17 +106,18 @@ function setup(cb) {
 }
 
 function teardown(cb) {
+  log.log("All done. Tearing down.");
   cb();
 }
 
 module.exports = {
-  agent1: agent1,
-  agent2: agent2,
-  agent_id: agent_id,
-  buf: buf,
-  patch: patch,
-  r: r,
-  setup: setup,
-  teardown: teardown,
-  verify: verify,
+  agent1,
+  agent2,
+  agent_id,
+  buf,
+  patch,
+  r,
+  setup,
+  teardown,
+  verify,
 };

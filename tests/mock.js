@@ -10,7 +10,7 @@ const DMP = require("native-diff-match-patch");
 const _ = require("lodash");
 
 const AgentHandler = require("handler/agent");
-const buf = require("../lib/buffer");
+const FloobitsProtocol = require("protocol/floobits");
 const perms = require("perms");
 const utils = require("utils");
 const settings = require("settings");
@@ -25,47 +25,37 @@ DMP.set_Patch_DeleteThreshold(settings.dmp.Patch_DeleteThreshold);
 DMP.set_Match_Threshold(settings.dmp.Match_Threshold);
 DMP.set_Match_Distance(settings.dmp.Match_Distance);
 
-const MockConn = function (agent) {
+const MockConn = function () {
   var self = this;
   events.EventEmitter.call(self);
-  self.agent = agent;
 };
 
 util.inherits(MockConn, events.EventEmitter);
 
 MockConn.prototype.write = function (name, req_id, data) {
-  var self = this;
-  if (settings.log_data) {
-    console.log(self.agent.toString(), "name:", name, "req_id:", req_id, "data:", JSON.stringify(data, null, 2));
+  if (!settings.log_data) {
+    return;
   }
+  console.log("name:", name, "req_id:", req_id, "data:", JSON.stringify(data, null, 2));
 };
 
 
-const FakeAgentHandler = function (r, agent_id) {
-  var self = this,
-    conn = new MockConn(self);
+const FakeAgentHandler = function () {
+  AgentHandler.apply(this, arguments);
 
-  AgentHandler.call(self, agent_id, conn, null);
-
-  clearTimeout(self.auth_timeout_id);
-  self.auth_timeout_id = null;
-  self.username = self.toString();
-  self.secret = "aoeuidhtns";
-  self.client = "FAKE";
-  self.version = "0.11";//agent.SUPPORTED_VERSIONS.slice(-1)[0];
-  self.platform = "FAKE_PLATFORM";
-  self.authenticated = true;
-  self.user_id = -1;
-  self.perms = [];
-  _.each(perms.db_perms_mapping, function (perm_map) {
-    self.perms = self.perms.concat(perm_map);
-  });
-  self.perms = _.uniq(self.perms);
-
-  self.room = r;
+  this.username = this.toString();
+  this.secret = "aoeuidhtns";
+  this.client = "FAKE";
+  this.version = this.SUPPORTED_VERSIONS.slice(-1)[0];
+  this.platform = "FAKE_PLATFORM";
+  this.authenticated = true;
+  this.user_id = -1;
+  this.perms = [];
 };
 
 util.inherits(FakeAgentHandler, AgentHandler);
+
+FakeAgentHandler.prototype.name = "FAKE";
 
 FakeAgentHandler.prototype.toString = function () {
   var self = this;
@@ -137,26 +127,48 @@ FakeAgentHandler.prototype.patch = function (patch_text, md5_before, md5_after) 
   self.buf = result[0];
 };
 
-FakeAgentHandler.prototype.write = function (name, req_id, data) {
-  var self = this;
+FakeAgentHandler.prototype.write = function (name, req_id, data, cb) {
+  const self = this;
 
-  self.conn.write(name, req_id, data);
+  data = data || {};
+
+  data.name = name;
+  self.protocol.respond(req_id, data, cb);
   log.log(self.id, name);
   if (name === "patch") {
     self.patch_events.push(data);
   } else if (name === "get_buf") {
     throw new Error(util.format("%s OH NO! GET BUF", self.toString()));
   }
+  if (cb) {
+    cb();
+  }
 };
 
 
-buf.BaseBuffer.prototype.save = function (force, cb) {
-  log.debug("save force: %s", force);
-  cb();
-};
+function makeAgent (r, agent_id) {
+  const protocol = new FloobitsProtocol(agent_id);
+  const conn = new MockConn();
+
+  protocol.init_conn(conn, true);
+
+  const agent = protocol.install_handler(FakeAgentHandler);
+
+  clearTimeout(agent.auth_timeout_id);
+  agent.auth_timeout_id = null;
+
+  utils.set_state(agent, agent.CONN_STATES.JOINED);
+
+  _.each(perms.db_perms_mapping, function (perm_map) {
+    agent.perms = agent.perms.concat(perm_map);
+  });
+  agent.perms = _.uniq(agent.perms);
+  agent.room = r;
+  return agent;
+}
 
 
 module.exports = {
-  buf,
   FakeAgentHandler,
+  makeAgent,
 };

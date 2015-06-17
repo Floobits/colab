@@ -183,7 +183,6 @@ function test6(t) {
 
 module.exports = {
   setUp: test.setup,
-  tearDown: test.teardown,
   test1: test1,
   test2: test2,
   test3: test3,
@@ -192,7 +191,8 @@ module.exports = {
   // TODO: fix the edge cases where they fail
   test5: test5,
   test6: test6,
-  test7: test6
+  test7: test6,
+  tearDown: test.teardown,
 };
 
 // module.exports["test8"] = test6;
