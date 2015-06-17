@@ -86,12 +86,9 @@ function permute_patches() {
   agents_patches = args.slice(1);
 
   _.each(agents_patches, function (agent_patches) {
-    var agent;
-    agent_id++;
-    agent = new mock.FakeAgentHandler(r, agent_id);
+    const agent = mock.makeAgent(r, ++agent_id);
     agent._patches = agent_patches;
     agents[agent_id] = agent;
-
     agent.on_room_load();
   });
 
