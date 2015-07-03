@@ -5,8 +5,8 @@ const util = require("util");
 
 const log = require("floorine");
 const DMP = require("native-diff-match-patch");
-// const diff_match_patch = require('diff_match_patch');
-// const DMP = new diff_match_patch.diff_match_patch();
+// const Diff_Match_Patch = require("dmp");
+// const DMP = new Diff_Match_Patch();
 const _ = require("lodash");
 
 const AgentHandler = require("../lib/handler/agent");

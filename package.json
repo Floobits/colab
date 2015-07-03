@@ -11,7 +11,7 @@
     "async": "1.x",
     "basic-auth": "1.x",
     "body-parser": "1.13.x",
-    "diff_match_patch": "0.1.x",
+    "dmp": "0.x",
     "express": "4.x",
     "fleece": "0.x",
     "floorine": "0.3.x",
