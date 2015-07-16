@@ -26,7 +26,7 @@ DMP.set_Match_Threshold(settings.dmp.Match_Threshold);
 DMP.set_Match_Distance(settings.dmp.Match_Distance);
 
 const MockConn = function () {
-  var self = this;
+  const self = this;
   events.EventEmitter.call(self);
 };
 
@@ -58,7 +58,7 @@ util.inherits(FakeAgentHandler, AgentHandler);
 FakeAgentHandler.prototype.name = "FAKE";
 
 FakeAgentHandler.prototype.toString = function () {
-  var self = this;
+  const self = this;
   return util.format("agent%s", self.id);
 };
 
@@ -81,18 +81,17 @@ FakeAgentHandler.prototype.on_room_load = function () {
 };
 
 FakeAgentHandler.prototype.log_buf = function () {
-  var self = this;
+  const self = this;
   log.log(self.toString(), "buf is", self.buf);
 };
 
 FakeAgentHandler.prototype.pop_patch = function (count) {
-  var self = this,
-    data;
+  const self = this;
 
   count = count === -1 ? self.patch_events.length : (count || 1);
 
   while (count > 0) {
-    data = self.patch_events.shift();
+    const data = self.patch_events.shift();
     if (data) {
       self.patch(data.patch, data.md5_before, data.md5_after);
     }
@@ -101,8 +100,7 @@ FakeAgentHandler.prototype.pop_patch = function (count) {
 };
 
 FakeAgentHandler.prototype.patch = function (patch_text, md5_before, md5_after) {
-  var self = this,
-    result;
+  const self = this;
 
   if (utils.md5(self.buf) === md5_before) {
     log.debug("md5_before %s OK", md5_before);
@@ -110,7 +108,7 @@ FakeAgentHandler.prototype.patch = function (patch_text, md5_before, md5_after) 
     log.warn("md5_before should be %s but is %s", md5_before, utils.md5(self.buf));
   }
   // patches = DMP.patch_fromText(patch_text);
-  result = DMP.patch_apply(patch_text, self.buf);
+  const result = DMP.patch_apply(patch_text, self.buf);
   if (utils.patched_cleanly(result) === false) {
     log.error("%s Patch %s wasn't applied!", self.toString(), patch_text);
     log.error("Result %s", result);
