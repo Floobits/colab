@@ -2,6 +2,7 @@
   "ecmaFeatures": {
     "arrowFunctions": true,
     "blockBindings": true,
+    "forOf": true,
     "generators": true,
     "objectLiteralShorthandProperties": true,
     "templateStrings": true
