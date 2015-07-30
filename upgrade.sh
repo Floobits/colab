@@ -23,7 +23,11 @@ mv -T -f /data/colab-new /data/colab && \
 sv restart /service/colab && \
 echo "Successfully updated to $RELEASE_NAME"
 
-# TODO: check return code from above before deleting stuff!
+if [ $? -ne 0 ]
+then
+  echo "ERROR DEPLOYING! BAILING"
+  exit 1
+fi
 
 # Remove all but the last 5 releases
 OLD_RELEASES=`ls -t -1 $RELEASE_BASE | grep -F "colab-" | sed -e '1,5d'`
