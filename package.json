@@ -18,7 +18,7 @@
     "flukes": "0.1.x",
     "fs-extra": "0.x",
     "heapdump": "0.3.x",
-    "leveldown": "1.2.x",
+    "leveldown": "1.4.x",
     "levelup": "1.2.x",
     "lodash": "3.x",
     "mime-types": "2.1.x",
