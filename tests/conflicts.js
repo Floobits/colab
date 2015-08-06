@@ -112,32 +112,32 @@ function permute_patches() {
     while (a1._remaining_patches.length > 0 || a2._remaining_patches.length > 0) {
       choice = Math.floor(Math.random() * 4);
       switch (choice) {
-      case 0:
-        if (a1._remaining_patches.length > 0) {
-          patch_obj = a1._remaining_patches[0];
-          log.debug("agent1 patch:", patch_obj);
-          a1._remaining_patches = a1._remaining_patches.slice(1);
-          permute_ops.push(patch.bind(null, a1, patch_obj));
-        }
-        break;
-      case 1:
-        if (a2._remaining_patches.length > 0) {
-          patch_obj = a2._remaining_patches[0];
-          log.debug("agent2 patch:", patch_obj);
-          a2._remaining_patches = a2._remaining_patches.slice(1);
-          permute_ops.push(patch.bind(null, a2, patch_obj));
-        }
-        break;
-      case 2:
-        log.debug("agent1 pop patch");
-        permute_ops.push(pop_agent1);
-        break;
-      case 3:
-        log.debug("agent2 pop patch");
-        permute_ops.push(pop_agent2);
-        break;
-      default:
-        throw new Error("Unknown op! This should never happen!");
+        case 0:
+          if (a1._remaining_patches.length > 0) {
+            patch_obj = a1._remaining_patches[0];
+            log.debug("agent1 patch:", patch_obj);
+            a1._remaining_patches = a1._remaining_patches.slice(1);
+            permute_ops.push(patch.bind(null, a1, patch_obj));
+          }
+          break;
+        case 1:
+          if (a2._remaining_patches.length > 0) {
+            patch_obj = a2._remaining_patches[0];
+            log.debug("agent2 patch:", patch_obj);
+            a2._remaining_patches = a2._remaining_patches.slice(1);
+            permute_ops.push(patch.bind(null, a2, patch_obj));
+          }
+          break;
+        case 2:
+          log.debug("agent1 pop patch");
+          permute_ops.push(pop_agent1);
+          break;
+        case 3:
+          log.debug("agent2 pop patch");
+          permute_ops.push(pop_agent2);
+          break;
+        default:
+          throw new Error("Unknown op! This should never happen!");
       }
     }
 
