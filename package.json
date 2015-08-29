@@ -28,10 +28,11 @@
     "request": "2.x"
   },
   "devDependencies": {
-    "eslint": "1.x"
+    "eslint": "1.x",
+    "eslint-config-floobits": "*"
   },
   "engines": {
-    "node": ">=2.0"
+    "node": ">=3.0"
   },
   "scripts": {
     "start": "./bin/colab",
