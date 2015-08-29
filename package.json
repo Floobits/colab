@@ -23,7 +23,7 @@
     "lodash": "3.x",
     "mime-types": "2.1.x",
     "morgan": "1.6.x",
-    "native-diff-match-patch": "0.2.x",
+    "native-diff-match-patch": "0.3.x",
     "nodeunit": "0.9.x",
     "request": "2.x"
   },
@@ -37,6 +37,6 @@
   "scripts": {
     "start": "./bin/colab",
     "test": "./tests/run_tests",
-    "lint": "./node_modules/eslint/bin/eslint.js ."
+    "lint": "eslint ."
   }
 }
