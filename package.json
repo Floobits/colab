@@ -21,7 +21,7 @@
     "fs-extra": "0.x",
     "heapdump": "0.3.x",
     "leveldown": "1.4.x",
-    "levelup": "1.2.x",
+    "levelup": "1.3.x",
     "lodash": "3.x",
     "mime-types": "2.1.x",
     "morgan": "1.6.x",
