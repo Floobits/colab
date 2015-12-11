@@ -45,7 +45,7 @@ do
 
   if [ $? -eq 0 ]
   then
-    curl -X POST http://$USER:$USER@dev00.floobits.com/deploy/colab_pubrelease/$HOST
+    curl -X POST https://$USER:$USER@dev00.floobits.com/deploy/colab_pubrelease/$HOST
   else
     echo "OMG DEPLOY FAILED"
     exit 1
