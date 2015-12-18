@@ -18,7 +18,6 @@ cd $RELEASE_DIR && \
 HOME=/tmp npm rebuild --unsafe-perm --build-from-source heapdump && \
 rm -fr /tmp/.node* && \
 HOME=/tmp npm rebuild --unsafe-perm --build-from-source `ls node_modules | grep -v heapdump`&& \
-node ./lib/migrate_settings.js /data/colab/lib && \
 cp /data/colab/lib/local_settings.js $RELEASE_DIR/lib/local_settings.js && \
 ln -s -f $RELEASE_DIR /data/colab-new && \
 mv -T -f /data/colab-new /data/colab && \
