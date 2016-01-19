@@ -22,7 +22,7 @@
     "heapdump": "0.3.x",
     "leveldown": "1.4.x",
     "levelup": "1.3.x",
-    "lodash": "3.x",
+    "lodash": "4.x",
     "mime-types": "2.1.x",
     "morgan": "1.6.x",
     "native-diff-match-patch": "0.3.x",
