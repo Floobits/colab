@@ -2,7 +2,6 @@
 const util = require("util");
 
 const _ = require("lodash");
-const DMP = require("native-diff-match-patch");
 const fs = require("fs-extra");
 const log = require("floorine");
 
@@ -55,22 +54,28 @@ let agent2 = mock.makeAgent(r, ++agent_id);
 
 function patch(agent, after) {
   let before = agent.buf;
+  let patches;
+  const dmp = buf.encoding === "utf8" ? buffer.JS_DMP : buffer.DMP;
   if (buf.encoding === "utf8") {
     before = before.toString();
+    patches = dmp.patch_make(before, after);
+    patches = dmp.patch_toText(patches);
+  } else if (buf.encoding === "base64") {
+    patches = dmp.patch_make(before, after);
+  } else {
+    throw new Error("INVALID BUFFER ENCODING!");
   }
-
-  const md5_before = utils.md5(before);
-  const md5_after = utils.md5(after);
-  const patches = DMP.patch_make(before, after);
 
   log.log(agent.toString(), "sending patch from", agent.buf, "to", after);
   agent.buf = after;
+  const md5_before = utils.md5(before);
+  const md5_after = utils.md5(after);
   buf.patch(agent, null, patches, md5_before, md5_after);
-  log.log("buf state is", buf._state);
+  log.log("buf state is", buf._state.toString());
 }
 
 function verify(test, agents) {
-  log.log("buf is", buf._state);
+  log.log("buf is", buf._state.toString());
   _.each(agents, function (agent) {
     test.strictEqual(buf._state.toString(), agent.buf, util.format("agent %s does not match!", agent.toString()));
   });

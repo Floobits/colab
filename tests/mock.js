@@ -4,12 +4,10 @@ const events = require("events");
 const util = require("util");
 
 const log = require("floorine");
-const DMP = require("native-diff-match-patch");
-// const Diff_Match_Patch = require("dmp");
-// const DMP = new Diff_Match_Patch();
 const _ = require("lodash");
 
 const AgentHandler = require("../lib/handler/agent");
+const buffer = require("../lib/buffer");
 const FloobitsProtocol = require("../lib/protocol/floobits");
 const perms = require("../lib/perms");
 const utils = require("../lib/utils");
@@ -17,13 +15,8 @@ const settings = require("../lib/settings");
 
 log.set_log_level("debug");
 
-// DMP.Patch_DeleteThreshold = settings.dmp.Patch_DeleteThreshold;
-// DMP.Match_Threshold = settings.dmp.Match_Threshold;
-// DMP.Match_Distance = settings.dmp.Match_Distance;
-
-DMP.set_Patch_DeleteThreshold(settings.dmp.Patch_DeleteThreshold);
-DMP.set_Match_Threshold(settings.dmp.Match_Threshold);
-DMP.set_Match_Distance(settings.dmp.Match_Distance);
+const DMP = buffer.DMP;
+const JS_DMP = buffer.JS_DMP;
 
 const MockConn = function () {
   const self = this;
@@ -74,7 +67,7 @@ FakeAgentHandler.prototype.on_room_load = function () {
 
   self.write("room_info", room_info);
 
-  self.buf = self.bufs[0]._state;
+  self.buf = self.bufs[0];
   self.lag = 0;
   self.patch_events = [];
   self.room.broadcast("join", self, null, self.to_json());
@@ -82,7 +75,7 @@ FakeAgentHandler.prototype.on_room_load = function () {
 
 FakeAgentHandler.prototype.log_buf = function () {
   const self = this;
-  log.log(self.toString(), "buf is", self.buf);
+  log.log(self.toString(), "buf is", self.buf.toString());
 };
 
 FakeAgentHandler.prototype.pop_patch = function (count) {
@@ -102,26 +95,33 @@ FakeAgentHandler.prototype.pop_patch = function (count) {
 FakeAgentHandler.prototype.patch = function (patch_text, md5_before, md5_after) {
   const self = this;
 
-  if (utils.md5(self.buf) === md5_before) {
+  if (utils.md5(self.buf._state) === md5_before) {
     log.debug("md5_before %s OK", md5_before);
   } else {
-    log.warn("md5_before should be %s but is %s", md5_before, utils.md5(self.buf));
+    log.warn("md5_before should be %s but is %s", md5_before, utils.md5(self.buf._state));
   }
-  // patches = DMP.patch_fromText(patch_text);
-  const result = DMP.patch_apply(patch_text, self.buf);
+  let result;
+  if (self.buf.encoding === "utf8") {
+    let patches = JS_DMP.patch_fromText(patch_text);
+    result = JS_DMP.patch_apply(patches, self.buf._state.toString());
+  } else if (self.buf.encoding === "base64") {
+    result = DMP.patch_apply(patch_text, self.buf._state);
+  } else {
+    throw new Error("INVALID ENCODING");
+  }
   if (utils.patched_cleanly(result) === false) {
     log.error("%s Patch %s wasn't applied!", self.toString(), patch_text);
     log.error("Result %s", result);
-    log.error("buf:", self.buf);
+    log.error("buf:", self.buf._state.toString());
     return;
   }
-  if (utils.md5(self.buf) !== md5_after) {
+  if (utils.md5(self.buf._state) !== md5_after) {
     log.debug("md5_after %s OK", md5_after);
   } else {
-    log.warn("md5_after should be %s but is %s", md5_after, utils.md5(self.buf));
+    log.warn("md5_after should be %s but is %s", md5_after, utils.md5(self.buf._state));
   }
-  log.log(self.toString(), "patched from", self.buf, "to", result[0]);
-  self.buf = result[0];
+  log.log(self.toString(), "patched from", self.buf._state.toString(), "to", result[0]);
+  self.buf._state = self.buf.normalize(result[0]);
 };
 
 FakeAgentHandler.prototype.write = function (name, req_id, data, cb) {
