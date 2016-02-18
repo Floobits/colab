@@ -7,9 +7,9 @@ then
 fi
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
-cd $DIR
+cd "$DIR" || (echo "cd $DIR failed!" && exit 1)
 
-echo $1 | grep '\.tar\.gz$'
+echo "$1" | grep '\.tar\.gz$'
 
 if [ $? -eq 0 ]
 then
@@ -18,7 +18,7 @@ then
 else
   echo "Building tarball..."
   TARBALL="$(./build_release.sh | tail -n 1)"
-  echo $TARBALL | grep '\.tar\.gz$'
+  echo "$TARBALL" | grep '\.tar\.gz$'
   if [ $? -ne 0 ]
   then
     echo "ERROR BUILDING TARBALL!"
@@ -31,21 +31,22 @@ RELEASE_NAME=$(basename "$TARBALL")
 RELEASE_NAME="${RELEASE_NAME%%.*}"
 RELEASE_DIR="/data/pubreleases/colab/"
 
-for HOST in $@
+for HOST in "$@"
 do
   echo "Deploying $RELEASE_NAME to $HOST"
 
-  scp -C $TARBALL $HOST:/tmp
-  scp ./upgrade.sh $HOST:/tmp/upgrade_$RELEASE_NAME.sh
+  scp -C "$TARBALL" "$HOST:/tmp"
+  scp ./upgrade.sh "$HOST:/tmp/upgrade_$RELEASE_NAME.sh"
 
-  ssh $HOST "sudo mkdir -p $RELEASE_DIR && \
+  # shellcheck disable=SC2029
+  ssh "$HOST" "sudo mkdir -p $RELEASE_DIR && \
   sudo cp /tmp/upgrade_$RELEASE_NAME.sh $RELEASE_DIR && \
   sudo cp /tmp/$TARBALL $RELEASE_DIR && \
   echo '$RELEASE_NAME' | sudo tee $RELEASE_DIR/latest"
 
   if [ $? -eq 0 ]
   then
-    curl -X POST https://$USER:$USER@dev00.floobits.com/deploy/colab_pubrelease/$HOST
+    curl -X POST "https://$USER:$USER@dev00.floobits.com/deploy/colab_pubrelease/$HOST"
   else
     echo "OMG DEPLOY FAILED"
     exit 1
