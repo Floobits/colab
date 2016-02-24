@@ -46,5 +46,6 @@ do
     curl -X POST "https://$USER:$USER@dev00.floobits.com/deploy/colab/$HOST" &
   else
     echo "OMG DEPLOY FAILED"
+    exit 1
   fi
 done
