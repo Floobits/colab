@@ -13,8 +13,6 @@ const perms = require("../lib/perms");
 const utils = require("../lib/utils");
 const settings = require("../lib/settings");
 
-log.set_log_level("debug");
-
 const DMP = buffer.DMP;
 const JS_DMP = buffer.JS_DMP;
 

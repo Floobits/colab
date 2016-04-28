@@ -8,6 +8,7 @@ const log = require("floorine");
 const buffer = require("../lib/buffer");
 const ldb = require("../lib/ldb");
 const room = require("../lib/room");
+const server = require("../lib/server");
 const settings = require("../lib/settings");
 const utils = require("../lib/utils");
 
@@ -23,29 +24,22 @@ process.on("uncaughtException", function (err) {
   /*eslint-enable no-process-exit */
 });
 
-log.set_log_level("debug");
-settings.bufs_dir = "/tmp/colab_test";
 
-let r = new room.Room(-1, {
+log.set_log_level("debug");
+settings.base_dir = "/tmp/colab_test_" + process.pid;
+settings.log_level = "debug";
+settings.json_port_ssl = null;
+
+const test_server = new server.ColabServer();
+
+const r = new room.Room(-1, {
   name: "fake_room",
   owner: "fake_owner",
   cur_fid: 0,
   max_size: 2147483647,
-}, {
-  workspaces: {},
-  db: {
-    get: function (key, get_cb) {
-      if (key !== "version_-1") {
-        return get_cb("WTF wrong workspace ID");
-      }
-      return get_cb(null, 1);
-    }
-  }
-});
+}, test_server);
 
-let buf = buffer.make(r, 0, "test.txt", "abc", utils.md5("abc"), true, "utf8");
-// Set this so the test doesn't hang for 90 seconds before exiting.
-buf.save_timeout = 1;
+let buf;
 
 let agent_id = 0;
 let agent1 = mock.makeAgent(r, ++agent_id);
@@ -86,12 +80,13 @@ function setup(cb) {
   /*eslint-disable no-sync */
   fs.mkdirsSync(ldb.get_db_path(-1));
   /*eslint-enable no-sync */
-  log.set_log_level("debug");
 
   r.once("load", function (err) {
     if (err) {
       throw new Error(err);
     }
+// Room.prototype.create_buf = function (agent, req_id, buf_path, text, encoding, cb) {
+    // buf = buffer.make(r, 0, "test.txt", "abc", utils.md5("abc"), true, "utf8");
 
     r.bufs[buf.id] = buf;
     r.tree_add_buf(buf);
@@ -99,7 +94,8 @@ function setup(cb) {
     agent1.on_room_load();
     agent2.on_room_load();
 
-    cb();
+    r.create_buf(agent1, 1, "test.txt", "abc", "utf8", cb);
+    // cb();
   });
 
   r.load(agent1, {
