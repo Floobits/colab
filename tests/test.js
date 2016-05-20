@@ -119,7 +119,7 @@ function setup(cb) {
 
 function teardown(cb) {
   log.log("All done. Tearing down.");
-  cb();
+  test_server.db.close(cb);
 }
 
 module.exports = {
