@@ -2,6 +2,7 @@
 const util = require("util");
 
 const _ = require("lodash");
+const async = require("async");
 const fs = require("fs-extra");
 const log = require("floorine");
 
@@ -80,6 +81,16 @@ function setup(cb) {
   /*eslint-disable no-sync */
   fs.mkdirsSync(ldb.get_db_path(-1));
   /*eslint-enable no-sync */
+
+  let auto = {};
+
+  auto.leveldb_open = test_server.open_db.bind(test_server);
+  auto.get_server_id = ["leveldb_open", test_server.get_server_id.bind(test_server)];
+  async.auto(auto, function (err) {
+    if (err) {
+      throw new Error(err);
+    }
+  });
 
   r.once("load", function (err) {
     if (err) {
