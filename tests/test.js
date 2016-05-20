@@ -82,22 +82,12 @@ function setup(cb) {
   fs.mkdirsSync(ldb.get_db_path(-1));
   /*eslint-enable no-sync */
 
-  let auto = {};
-
-  auto.leveldb_open = test_server.open_db.bind(test_server);
-  auto.get_server_id = ["leveldb_open", test_server.get_server_id.bind(test_server)];
-  async.auto(auto, function (err) {
-    if (err) {
-      throw new Error(err);
-    }
-  });
-
   r.once("load", function (err) {
     if (err) {
       throw new Error(err);
     }
-// Room.prototype.create_buf = function (agent, req_id, buf_path, text, encoding, cb) {
-    // buf = buffer.make(r, 0, "test.txt", "abc", utils.md5("abc"), true, "utf8");
+    // Room.prototype.create_buf = function (agent, req_id, buf_path, text, encoding, cb) {
+    buf = buffer.make(r, 0, "test.txt", "abc", utils.md5("abc"), true, "utf8");
 
     r.bufs[buf.id] = buf;
     r.tree_add_buf(buf);
@@ -109,8 +99,21 @@ function setup(cb) {
     // cb();
   });
 
-  r.load(agent1, {
-    createIfMissing: true,
+  let auto = {
+    leveldb_open: test_server.open_db.bind(test_server),
+    get_server_id: ["leveldb_open", test_server.get_server_id.bind(test_server)],
+    create_workspace: ["get_server_id", (cb) => {
+      test_server.db.put(util.format("version_%s", r.id), 1, cb);
+    }],
+  };
+
+  async.auto(auto, function (err) {
+    if (err) {
+      throw new Error(err);
+    }
+    r.load(agent1, {
+      createIfMissing: true,
+    });
   });
 }
 
