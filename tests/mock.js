@@ -63,7 +63,7 @@ FakeAgentHandler.prototype.on_room_load = function () {
   // add_agent munges agent.perms :/
   room_info.perms = self.perms;
 
-  self.write("room_info", room_info);
+  self.write("room_info", null, room_info);
 
   self.buf = self.bufs[0];
   self.lag = 0;
