@@ -86,7 +86,6 @@ function setup(cb) {
     if (err) {
       throw new Error(err);
     }
-    // Room.prototype.create_buf = function (agent, req_id, buf_path, text, encoding, cb) {
     buf = buffer.make(r, 0, "test.txt", "abc", utils.md5("abc"), true, "utf8");
 
     r.bufs[buf.id] = buf;
