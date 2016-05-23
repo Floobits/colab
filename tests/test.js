@@ -86,10 +86,6 @@ function setup(cb) {
     if (err) {
       throw new Error(err);
     }
-    buf = buffer.make(r, 0, "test.txt", "abc", utils.md5("abc"), true, "utf8");
-
-    r.bufs[buf.id] = buf;
-    r.tree_add_buf(buf);
 
     agent1.on_room_load();
     agent2.on_room_load();
