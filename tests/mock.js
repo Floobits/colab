@@ -65,7 +65,7 @@ FakeAgentHandler.prototype.on_room_load = function () {
 
   self.write("room_info", null, room_info);
 
-  self.buf = self.bufs[0];
+  self.buf = self.bufs[self.room.cur_fid];
   self.lag = 0;
   self.patch_events = [];
   self.room.broadcast("join", self, null, self.to_json());

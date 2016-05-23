@@ -91,6 +91,7 @@ function setup(cb) {
     agent2.on_room_load();
 
     r.create_buf(agent1, 1, util.format("test%s.txt", i), "abc", "utf8", cb);
+    buf = r.bufs[r.cur_fid];
     i++;
     // cb();
   });
