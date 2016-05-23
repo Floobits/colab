@@ -87,11 +87,10 @@ function setup(cb) {
       throw new Error(err);
     }
 
-    agent1.on_room_load();
-    agent2.on_room_load();
-
     r.create_buf(agent1, 1, util.format("test%s.txt", i), "abc", "utf8", (err) => {
       buf = r.bufs[r.cur_fid];
+      agent1.on_room_load();
+      agent2.on_room_load();
       cb(err);
     });
     i++;
