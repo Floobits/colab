@@ -15,9 +15,6 @@ let patch = test.patch,
 
 
 function test1(t) {
-  agent1.buf = "abc";
-  agent2.buf = "abc";
-
   patch(agent1, "abcd");
   patch(agent1, "abcde");
   patch(agent2, "abcd");
@@ -30,9 +27,6 @@ function test1(t) {
 }
 
 function test2(t) {
-  agent1.buf = "abc";
-  agent2.buf = "abc";
-
   patch(agent1, "abcd");
   patch(agent1, "abcde");
   patch(agent2, "abcf");
@@ -45,9 +39,6 @@ function test2(t) {
 }
 
 function test3(t) {
-  agent1.buf = "abc";
-  agent2.buf = "abc";
-
   patch(agent1, "abcd");
   patch(agent1, "abcde");
   patch(agent2, "abcd");
@@ -62,9 +53,6 @@ function test3(t) {
 }
 
 function test4(t) {
-  agent1.buf = "abc";
-  agent2.buf = "abc";
-
   patch(agent2, "abcdef");
   patch(agent1, "ab");
   agent2.pop_patch(-1);
@@ -160,9 +148,6 @@ function permute_patches() {
 function test5(t) {
   permute_patches(t, ["abc", "abcde"], ["abc", "abcde"]);
 
-  agent1.buf = "abc";
-  agent2.buf = "abc";
-
   patch(agent1, "abcde");
   patch(agent2, "abcdef");
   agent2.pop_patch(-1);
@@ -198,8 +183,6 @@ module.exports = {
 // module.exports["test11"] = test6;
 
 // module.exports.fails_wtf = function (test) {
-//   agent1.buf = "abc";
-//   agent2.buf = "abc";
 
 // //  agent2.pop_patch(1);
 // //  patch(agent1, "abc");
