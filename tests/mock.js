@@ -42,6 +42,7 @@ const FakeAgentHandler = function () {
   this.authenticated = true;
   this.user_id = -1;
   this.perms = [];
+  this.buf = null;
 };
 
 util.inherits(FakeAgentHandler, AgentHandler);
@@ -66,9 +67,11 @@ FakeAgentHandler.prototype.on_room_load = function () {
 
   const buf = self.room.bufs[self.room.cur_fid];
   self.buf = {
-    _state: buf.encoding === "utf8" ? buf._state : new Buffer(buf._state),
+    _md5: buf._md5,
+    _state: new Buffer(buf._state),
     encoding: buf.encoding,
     normalize: buf.normalize,
+    toString: buf.toString,
   };
   self.lag = 0;
   self.patch_events = [];
