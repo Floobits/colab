@@ -52,19 +52,19 @@ function patch(agent, after) {
   let patches;
   const dmp = buf.encoding === "utf8" ? buffer.JS_DMP : buffer.DMP;
   if (buf.encoding === "utf8") {
-    before = before.toString();
-    patches = dmp.patch_make(before, after);
+    patches = dmp.patch_make(before._state.toString(), after);
     patches = dmp.patch_toText(patches);
   } else if (buf.encoding === "base64") {
-    patches = dmp.patch_make(before, after);
+    patches = dmp.patch_make(before._state, after);
   } else {
     throw new Error("INVALID BUFFER ENCODING!");
   }
 
-  log.log(agent.toString(), "sending patch from", agent.buf, "to", after);
-  agent.buf = after;
-  const md5_before = utils.md5(before);
+  log.log(agent.toString(), "sending patch from", before._state, "to", after);
+  const md5_before = utils.md5(before._state);
   const md5_after = utils.md5(after);
+  agent.buf._state = new Buffer(after);
+  agent.buf._md5 = md5_after;
   buf.patch(agent, null, patches, md5_before, md5_after);
   log.log("buf state is", buf._state.toString());
 }
