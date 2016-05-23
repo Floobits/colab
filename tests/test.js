@@ -41,7 +41,7 @@ const r = new room.Room(-1, {
 }, test_server);
 
 let buf;
-
+let i = 0;
 let agent_id = 0;
 let agent1 = mock.makeAgent(r, ++agent_id);
 let agent2 = mock.makeAgent(r, ++agent_id);
@@ -94,7 +94,8 @@ function setup(cb) {
     agent1.on_room_load();
     agent2.on_room_load();
 
-    r.create_buf(agent1, 1, "test.txt", "abc", "utf8", cb);
+    r.create_buf(agent1, 1, util.format("test%s.txt", i), "abc", "utf8", cb);
+    i++;
     // cb();
   });
 
