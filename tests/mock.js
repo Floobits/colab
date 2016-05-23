@@ -11,7 +11,6 @@ const buffer = require("../lib/buffer");
 const FloobitsProtocol = require("../lib/protocol/floobits");
 const perms = require("../lib/perms");
 const utils = require("../lib/utils");
-const settings = require("../lib/settings");
 
 const DMP = buffer.DMP;
 const JS_DMP = buffer.JS_DMP;
@@ -23,12 +22,7 @@ const MockConn = function () {
 
 util.inherits(MockConn, events.EventEmitter);
 
-MockConn.prototype.write = function (data) {
-  if (!settings.log_data) {
-    return;
-  }
-  console.log("data:", data);
-};
+MockConn.prototype.write = function () {};
 
 
 const FakeAgentHandler = function () {
