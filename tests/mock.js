@@ -23,11 +23,11 @@ const MockConn = function () {
 
 util.inherits(MockConn, events.EventEmitter);
 
-MockConn.prototype.write = function (name, req_id, data) {
+MockConn.prototype.write = function (data) {
   if (!settings.log_data) {
     return;
   }
-  console.log("name:", name, "req_id:", req_id, "data:", JSON.stringify(data, null, 2));
+  console.log("data:", data);
 };
 
 
