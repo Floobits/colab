@@ -90,10 +90,11 @@ function setup(cb) {
     agent1.on_room_load();
     agent2.on_room_load();
 
-    r.create_buf(agent1, 1, util.format("test%s.txt", i), "abc", "utf8", cb);
-    buf = r.bufs[r.cur_fid];
+    r.create_buf(agent1, 1, util.format("test%s.txt", i), "abc", "utf8", (err) => {
+      buf = r.bufs[r.cur_fid];
+      cb(err);
+    });
     i++;
-    // cb();
   });
 
   let auto = {
