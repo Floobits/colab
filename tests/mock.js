@@ -57,7 +57,6 @@ FakeAgentHandler.prototype.on_room_load = function () {
   const self = this;
 
   self.room.handlers[self.id] = self;
-  self.bufs = self.room.bufs;
 
   let room_info = self.room.room_info();
   // add_agent munges agent.perms :/
@@ -65,7 +64,12 @@ FakeAgentHandler.prototype.on_room_load = function () {
 
   self.write("room_info", null, room_info);
 
-  self.buf = self.bufs[self.room.cur_fid];
+  const buf = self.room.bufs[self.room.cur_fid];
+  self.buf = {
+    _state: buf.encoding === "utf8" ? buf._state : new Buffer(buf._state),
+    encoding: buf.encoding,
+    normalize: buf.normalize,
+  };
   self.lag = 0;
   self.patch_events = [];
   self.room.broadcast("join", self, null, self.to_json());
@@ -84,6 +88,7 @@ FakeAgentHandler.prototype.pop_patch = function (count) {
   while (count > 0) {
     const data = self.patch_events.shift();
     if (data) {
+      log.debug("Popping patch %s", count);
       self.patch(data.patch, data.md5_before, data.md5_after);
     }
     count--;
