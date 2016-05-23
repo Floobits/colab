@@ -72,7 +72,7 @@ function patch(agent, after) {
 function verify(test, agents) {
   log.log("buf is", buf._state.toString());
   _.each(agents, function (agent) {
-    test.strictEqual(buf._state.toString(), agent.buf, util.format("agent %s does not match!", agent.toString()));
+    test.strictEqual(buf._state.toString(), agent.buf._state.toString(), util.format("agent %s does not match!", agent.toString()));
   });
   console.log("\n------------------------------\n");
 }
