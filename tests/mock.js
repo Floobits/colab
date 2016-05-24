@@ -132,6 +132,18 @@ FakeAgentHandler.prototype.write = function (name, req_id, data, cb) {
 
   data = data || {};
 
+  if (self.state < self.CONN_STATES.JOINED) {
+    log.warn("client %s: Discarding event %s because conn state is %s", self.toString(), name, self.state);
+    return cb && cb("Not joined yet");
+  }
+
+  if (self.state >= self.CONN_STATES.DESTROYED) {
+    log.error("Somebody called write after we destroyed connection %s!", self.id);
+    log.error("Event: %s", name);
+    console.trace();
+    return cb && cb("Connection is destroyed");
+  }
+
   data.name = name;
   self.protocol.respond(req_id, data, cb);
   log.log(self.id, name);
