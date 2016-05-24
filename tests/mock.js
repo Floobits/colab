@@ -70,7 +70,7 @@ FakeAgentHandler.prototype.on_room_load = function () {
   };
   self.lag = 0;
   self.patch_events = [];
-  self.errors = [];
+  self.events = {};
   self.room.broadcast("join", self, null, self.to_json());
   self.write("room_info", null, room_info);
 };
@@ -135,10 +135,14 @@ FakeAgentHandler.prototype.write = function (name, req_id, data, cb) {
   data.name = name;
   self.protocol.respond(req_id, data, cb);
   log.log(self.id, name);
+
+  if (!self.events[name]) {
+    self.events[name] = [];
+  }
+  self.events[name].push(data);
+
   if (name === "patch") {
     self.patch_events.push(data);
-  } else if (name === "error") {
-    self.errors.push(data);
   } else if (name === "get_buf") {
     throw new Error(util.format("%s OH NO! GET BUF", self.toString()));
   }
