@@ -18,7 +18,7 @@ function test1(t) {
   agents[1].pop_patch(-1);
   agents[0].pop_patch(-1);
 
-  verify(t, [agents[0], agents[1]]);
+  verify(t, agents);
   t.done();
 }
 
@@ -30,7 +30,7 @@ function test2(t) {
   agents[1].pop_patch(-1);
   agents[0].pop_patch(-1);
 
-  verify(t, [agents[0], agents[1]]);
+  verify(t, agents);
   t.done();
 }
 
@@ -44,7 +44,7 @@ function test3(t) {
   agents[1].pop_patch(-1);
   agents[0].pop_patch(-1);
 
-  verify(t, [agents[0], agents[1]]);
+  verify(t, agents);
   t.done();
 }
 
@@ -54,7 +54,7 @@ function test4(t) {
   agents[1].pop_patch(-1);
   agents[0].pop_patch(-1);
 
-  verify(t, [agents[0], agents[1]]);
+  verify(t, agents);
   t.done();
 }
 
@@ -138,7 +138,7 @@ function permute_patches() {
   _.each(ops, function (op) {
     op();
   });
-  verify(t, [agents[0], agents[1]]);
+  verify(t, agents);
 }
 
 function test5(t) {
@@ -149,7 +149,7 @@ function test5(t) {
   agents[1].pop_patch(-1);
   agents[0].pop_patch(-1);
 
-  verify(t, [agents[0], agents[1]]);
+  verify(t, agents);
   t.done();
 }
 
@@ -196,6 +196,6 @@ module.exports = {
 
 //   agents[0].pop_patch(-1);
 //   agents[1].pop_patch(-1);
-//   verify(test, [agents[0], agents[1]]);
+//   verify(test, agents);
 //   test.done();
 // };
