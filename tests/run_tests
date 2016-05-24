@@ -4,6 +4,6 @@
 const reporter = require("nodeunit").reporters.default;
 reporter.run([
   "tests/conflicts.js",
-  // "tests/newlines.js",
   // "tests/indentation.js",
+  "tests/newlines.js",
 ]);

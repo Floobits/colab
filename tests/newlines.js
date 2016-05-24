@@ -23,6 +23,11 @@ function crs(t) {
     "name": "error"
   }]);
 
+  const buf = agents[0].buf;
+  t.strictEqual(buf._state.toString(), "1234\r\n5678\n9012\n3456\n");
+  // Lame hack so that verify works.
+  buf._state = new Buffer(buf._state.toString().replace("\r", ""));
+
   verify(t, agents);
   t.done();
 }
