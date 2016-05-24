@@ -2,4 +2,8 @@
 "use strict";
 
 const reporter = require("nodeunit").reporters.default;
-reporter.run(["tests/conflicts.js"]);
+reporter.run([
+  "tests/conflicts.js",
+  // "tests/newlines.js",
+  // "tests/indentation.js",
+]);
