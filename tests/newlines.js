@@ -1,5 +1,8 @@
 "use strict";
 
+const basename = require("path").basename;
+const util = require("util");
+
 const test = require("./test");
 const patch = test.patch;
 const verify = test.verify;
@@ -13,6 +16,12 @@ function crs(t) {
 
   patch(agents[0], "1234\r\n5678\n9012\n3456\n");
   agents[0].pop_patch(-1);
+
+  t.deepEqual(agents[0].errors, [{
+    "msg": util.format("Your editor sent a carriage return in %s. Check your newline rules!", basename(agents[0].buf.path)),
+    "flash": false,
+    "name": "error"
+  }]);
 
   verify(t, agents);
   t.done();
