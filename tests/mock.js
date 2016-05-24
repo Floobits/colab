@@ -155,8 +155,6 @@ FakeAgentHandler.prototype.write = function (name, req_id, data, cb) {
 
   if (name === "patch") {
     self.patch_events.push(data);
-  } else if (name === "get_buf") {
-    throw new Error(util.format("%s OH NO! GET BUF", self.toString()));
   }
   if (cb) {
     cb();
