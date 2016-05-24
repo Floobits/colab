@@ -33,18 +33,11 @@ settings.json_port_ssl = null;
 
 const test_server = new server.ColabServer();
 
-const r = new room.Room(-1, {
-  name: "fake_room",
-  owner: "fake_owner",
-  cur_fid: 0,
-  max_size: 2147483647,
-}, test_server);
-
 let buf;
 let i = 0;
+let r;
 let agent_id = 0;
-let agent1 = mock.makeAgent(r, ++agent_id);
-let agent2 = mock.makeAgent(r, ++agent_id);
+const agents = [null, null];
 
 
 function patch(agent, after) {
@@ -82,16 +75,29 @@ function setup(cb) {
   fs.mkdirsSync(ldb.get_db_path(-1));
   /*eslint-enable no-sync */
 
+  r = new room.Room(-1, {
+    name: "fake_room",
+    owner: "fake_owner",
+    cur_fid: 0,
+    max_size: 2147483647,
+  }, test_server);
+
+  agents[0] = mock.makeAgent(r, ++agent_id);
+  agents[1] = mock.makeAgent(r, ++agent_id);
+
   r.once("load", function (err) {
     if (err) {
       throw new Error(err);
     }
 
-    r.create_buf(agent1, 1, util.format("test%s.txt", i), "abc", "utf8", (err) => {
+    r.create_buf(agents[0], 1, util.format("test%s.txt", i), "abc", "utf8", (err) => {
+      if (err) {
+        return cb(err);
+      }
       buf = r.bufs[r.cur_fid];
-      agent1.on_room_load();
-      agent2.on_room_load();
-      cb(err);
+      agents[0].on_room_load();
+      agents[1].on_room_load();
+      cb();
     });
     i++;
   });
@@ -108,7 +114,7 @@ function setup(cb) {
     if (err) {
       throw new Error(err);
     }
-    r.load(agent1, {
+    r.load(agents[0], {
       createIfMissing: true,
     });
   });
@@ -116,16 +122,16 @@ function setup(cb) {
 
 function teardown(cb) {
   log.log("All done. Tearing down.");
+  agents[0].destroy();
+  agents[1].destroy();
   test_server.db.close(cb);
 }
 
 module.exports = {
-  agent1,
-  agent2,
+  agents,
   agent_id,
   buf,
   patch,
-  r,
   setup,
   teardown,
   verify,

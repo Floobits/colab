@@ -23,6 +23,8 @@ const MockConn = function () {
 util.inherits(MockConn, events.EventEmitter);
 
 MockConn.prototype.write = function () {};
+MockConn.prototype.end = function () {};
+MockConn.prototype.destroy = function () {};
 
 
 const FakeAgentHandler = function () {

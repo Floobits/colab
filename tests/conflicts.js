@@ -3,62 +3,58 @@
 const log = require("floorine");
 const _ = require("lodash");
 
-const mock = require("./mock");
 const test = require("./test");
 
 let patch = test.patch,
   verify = test.verify,
-  agent1 = test.agent1,
-  agent2 = test.agent2,
-  agent_id = test.agent_id,
-  r = test.r;
+  agents = test.agents;
 
 
 function test1(t) {
-  patch(agent1, "abcd");
-  patch(agent1, "abcde");
-  patch(agent2, "abcd");
+  patch(agents[0], "abcd");
+  patch(agents[0], "abcde");
+  patch(agents[1], "abcd");
 
-  agent2.pop_patch(-1);
-  agent1.pop_patch(-1);
+  agents[1].pop_patch(-1);
+  agents[0].pop_patch(-1);
 
-  verify(t, [agent1, agent2]);
+  verify(t, [agents[0], agents[1]]);
   t.done();
 }
 
 function test2(t) {
-  patch(agent1, "abcd");
-  patch(agent1, "abcde");
-  patch(agent2, "abcf");
+  patch(agents[0], "abcd");
+  patch(agents[0], "abcde");
+  patch(agents[1], "abcf");
 
-  agent2.pop_patch(-1);
-  agent1.pop_patch(-1);
+  agents[1].pop_patch(-1);
+  agents[0].pop_patch(-1);
 
-  verify(t, [agent1, agent2]);
+  verify(t, [agents[0], agents[1]]);
   t.done();
 }
 
 function test3(t) {
-  patch(agent1, "abcd");
-  patch(agent1, "abcde");
-  patch(agent2, "abcd");
-  patch(agent2, "abcde");
-  patch(agent2, "abcdef");
+  patch(agents[0], "abcd");
+  patch(agents[0], "abcde");
+  patch(agents[1], "abcd");
+  patch(agents[1], "abcde");
+  patch(agents[1], "abcdef");
 
-  agent2.pop_patch(-1);
-  agent1.pop_patch(-1);
+  agents[1].pop_patch(-1);
+  agents[0].pop_patch(-1);
 
-  verify(t, [agent1, agent2]);
+  verify(t, [agents[0], agents[1]]);
   t.done();
 }
 
 function test4(t) {
-  patch(agent2, "abcdef");
-  patch(agent1, "ab");
-  agent2.pop_patch(-1);
-  agent1.pop_patch(-1);
+  patch(agents[1], "abcdef");
+  patch(agents[0], "ab");
+  agents[1].pop_patch(-1);
+  agents[0].pop_patch(-1);
 
-  verify(t, [agent1, agent2]);
+  verify(t, [agents[0], agents[1]]);
   t.done();
 }
 
@@ -73,10 +69,10 @@ function permute_patches() {
   t = args[0];
   agents_patches = args.slice(1);
 
-  _.each(agents_patches, function (agent_patches) {
-    const agent = mock.makeAgent(r, ++agent_id);
+  _.each(agents_patches, function (agent_patches, i) {
+    const agent = test.agents[i];
     agent._patches = agent_patches;
-    agents[agent_id] = agent;
+    agents[i] = agent;
     agent.on_room_load();
   });
 
@@ -103,7 +99,7 @@ function permute_patches() {
         case 0:
           if (a1._remaining_patches.length > 0) {
             patch_obj = a1._remaining_patches[0];
-            log.debug("agent1 patch:", patch_obj);
+            log.debug("agents[0] patch:", patch_obj);
             a1._remaining_patches = a1._remaining_patches.slice(1);
             permute_ops.push(patch.bind(null, a1, patch_obj));
           }
@@ -111,17 +107,17 @@ function permute_patches() {
         case 1:
           if (a2._remaining_patches.length > 0) {
             patch_obj = a2._remaining_patches[0];
-            log.debug("agent2 patch:", patch_obj);
+            log.debug("agents[1] patch:", patch_obj);
             a2._remaining_patches = a2._remaining_patches.slice(1);
             permute_ops.push(patch.bind(null, a2, patch_obj));
           }
           break;
         case 2:
-          log.debug("agent1 pop patch");
+          log.debug("agents[0] pop patch");
           permute_ops.push(pop_agent1);
           break;
         case 3:
-          log.debug("agent2 pop patch");
+          log.debug("agents[1] pop patch");
           permute_ops.push(pop_agent2);
           break;
         default:
@@ -138,22 +134,22 @@ function permute_patches() {
     return permute_ops;
   };
 
-  ops = permute(agents[agent_id - 1], agents[agent_id]);
+  ops = permute(agents[0], agents[1]);
   _.each(ops, function (op) {
     op();
   });
-  verify(t, [agents[agent_id - 1], agents[agent_id]]);
+  verify(t, [agents[0], agents[1]]);
 }
 
 function test5(t) {
   permute_patches(t, ["abc", "abcde"], ["abc", "abcde"]);
 
-  patch(agent1, "abcde");
-  patch(agent2, "abcdef");
-  agent2.pop_patch(-1);
-  agent1.pop_patch(-1);
+  patch(agents[0], "abcde");
+  patch(agents[1], "abcdef");
+  agents[1].pop_patch(-1);
+  agents[0].pop_patch(-1);
 
-  verify(t, [agent1, agent2]);
+  verify(t, [agents[0], agents[1]]);
   t.done();
 }
 
@@ -184,22 +180,22 @@ module.exports = {
 
 // module.exports.fails_wtf = function (test) {
 
-// //  agent2.pop_patch(1);
-// //  patch(agent1, "abc");
-// //  agent1.pop_patch(1);
-//   patch(agent1, "abcd");
-//   patch(agent2, "abc");
-//   patch(agent2, "abcd");
-//   agent2.pop_patch(2);
-//   agent1.pop_patch(1);
-//   patch(agent1, "abcde");
-//   agent1.pop_patch(1);
-//   patch(agent2, "abcde");
-//   agent1.pop_patch(1);
-//   patch(agent2, "abcdef");
+// //  agents[1].pop_patch(1);
+// //  patch(agents[0], "abc");
+// //  agents[0].pop_patch(1);
+//   patch(agents[0], "abcd");
+//   patch(agents[1], "abc");
+//   patch(agents[1], "abcd");
+//   agents[1].pop_patch(2);
+//   agents[0].pop_patch(1);
+//   patch(agents[0], "abcde");
+//   agents[0].pop_patch(1);
+//   patch(agents[1], "abcde");
+//   agents[0].pop_patch(1);
+//   patch(agents[1], "abcdef");
 
-//   agent1.pop_patch(-1);
-//   agent2.pop_patch(-1);
-//   verify(test, [agent1, agent2]);
+//   agents[0].pop_patch(-1);
+//   agents[1].pop_patch(-1);
+//   verify(test, [agents[0], agents[1]]);
 //   test.done();
 // };

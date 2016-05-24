@@ -3,18 +3,17 @@
 const test = require("./test");
 const patch = test.patch;
 const verify = test.verify;
-const agent1 = test.agent1;
-const agent2 = test.agent2;
+const agents = test.agents;
 
 function tabs(t) {
-  agent1.buf = "blah\n\tblah\n\tblah\n";
-  agent2.buf = "blah\n\tblah\n\tblah\n";
+  agents[0].buf = "blah\n\tblah\n\tblah\n";
+  agents[1].buf = "blah\n\tblah\n\tblah\n";
 
-  patch(agent1, "blah\n\t  blah\n\tblah\n");
+  patch(agents[0], "blah\n\t  blah\n\tblah\n");
 
-  agent1.pop_patch(-1);
+  agents[0].pop_patch(-1);
 
-  verify(t, [agent1, agent2]);
+  verify(t, [agents[0], agents[1]]);
   t.done();
 }
 
