@@ -59,8 +59,6 @@ FakeAgentHandler.prototype.on_room_load = function () {
   // add_agent munges agent.perms :/
   room_info.perms = self.perms;
 
-  self.write("room_info", null, room_info);
-
   const buf = self.room.bufs[self.room.cur_fid];
   self.buf = {
     _md5: buf._md5,
@@ -72,6 +70,7 @@ FakeAgentHandler.prototype.on_room_load = function () {
   self.lag = 0;
   self.patch_events = [];
   self.room.broadcast("join", self, null, self.to_json());
+  self.write("room_info", null, room_info);
 };
 
 FakeAgentHandler.prototype.log_buf = function () {
