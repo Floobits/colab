@@ -61,6 +61,7 @@ FakeAgentHandler.prototype.on_room_load = function () {
 
   const buf = self.room.bufs[self.room.cur_fid];
   self.buf = {
+    path: buf.path,
     _md5: buf._md5,
     _state: new Buffer(buf._state),
     encoding: buf.encoding,
@@ -69,6 +70,7 @@ FakeAgentHandler.prototype.on_room_load = function () {
   };
   self.lag = 0;
   self.patch_events = [];
+  self.errors = [];
   self.room.broadcast("join", self, null, self.to_json());
   self.write("room_info", null, room_info);
 };
@@ -135,6 +137,8 @@ FakeAgentHandler.prototype.write = function (name, req_id, data, cb) {
   log.log(self.id, name);
   if (name === "patch") {
     self.patch_events.push(data);
+  } else if (name === "error") {
+    self.errors.push(data);
   } else if (name === "get_buf") {
     throw new Error(util.format("%s OH NO! GET BUF", self.toString()));
   }
