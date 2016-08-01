@@ -34,7 +34,7 @@
     "eslint-config-floobits": "*"
   },
   "engines": {
-    "node": ">=3.0"
+    "node": ">=6.0"
   },
   "scripts": {
     "start": "./bin/colab",
