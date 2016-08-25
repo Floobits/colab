@@ -39,6 +39,8 @@ const FakeAgentHandler = function () {
   this.user_id = -1;
   this.perms = [];
   this.buf = null;
+  // TODO: set this to true in tests where we shouldn't get a get_buf
+  this.fail_on_get_buf = false;
 };
 
 util.inherits(FakeAgentHandler, AgentHandler);
@@ -131,6 +133,10 @@ FakeAgentHandler.prototype.write = function (name, req_id, data, cb) {
   const self = this;
 
   data = data || {};
+
+  if (self.fail_on_get_buf && name === "get_buf") {
+    throw new Error(util.format("%s OH NO! GET BUF", self.toString()));
+  }
 
   if (self.state < self.CONN_STATES.JOINED) {
     log.warn("client %s: Discarding event %s because conn state is %s", self.toString(), name, self.state);
