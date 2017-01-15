@@ -1,4 +1,5 @@
 "use strict";
+/* eslint-disable no-unused-vars */
 
 const log = require("floorine");
 const _ = require("lodash");
@@ -199,3 +200,4 @@ module.exports = {
 //   verify(test, agents);
 //   test.done();
 // };
+/* eslint-enable no-unused-vars */
