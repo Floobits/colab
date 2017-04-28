@@ -4,4 +4,4 @@ ulimit -n 65535
 
 export NODE_ENV=production
 
-exec node /data/colab/bin/colab 2>&1
+exec node --max-old-space-size=4096 /data/colab/bin/colab 2>&1
