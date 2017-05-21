@@ -25,7 +25,7 @@
     "lodash": "4.x",
     "mime-types": "2.1.x",
     "morgan": "1.x",
-    "native-diff-match-patch": "0.3.x",
+    "native-diff-match-patch": "1.x",
     "nodeunit": "0.10.x",
     "request": "2.x"
   },
