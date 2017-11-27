@@ -1,6 +1,6 @@
 g++
 git
-libqt4-dev
+qtbase5-dev
 make
 mercurial
 msmtp
