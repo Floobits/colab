@@ -41,6 +41,7 @@ do
   # shellcheck disable=SC2029
   ssh "$HOST" "$SSH_CMD"
 
+  # shellcheck disable=SC2181
   if [ $? -eq 0 ]
   then
     curl -X POST "https://$USER:$USER@dev00.floobits.com/deploy/colab/$HOST" &

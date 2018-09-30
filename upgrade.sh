@@ -26,6 +26,7 @@ mv -T -f /data/colab-new /data/colab && \
 sv restart /service/colab && \
 echo "Successfully updated to $RELEASE_NAME"
 
+# shellcheck disable=SC2181
 if [ $? -ne 0 ]
 then
   echo "ERROR DEPLOYING! BAILING"
