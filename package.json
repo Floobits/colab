@@ -10,7 +10,7 @@
   ],
   "version": "0.0.2",
   "dependencies": {
-    "async": "1.x",
+    "async": "2.x",
     "basic-auth": "1.x",
     "body-parser": "1.x",
     "dmp": "1.x",
